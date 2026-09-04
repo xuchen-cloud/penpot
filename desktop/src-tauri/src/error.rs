@@ -37,6 +37,9 @@ pub enum DesktopError {
 
     #[error("runtime process error: {0}")]
     Process(String),
+
+    #[error("compatibility gate error: {0}")]
+    Compatibility(String),
 }
 
 impl serde::Serialize for DesktopError {

@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "target": "x86_64-pc-windows-msvc",
+  "ports": ["postgres", "cache", "media", "backend", "exporter"],
+  "steps": [
+    { "id": "version.postgres", "action": "command", "command": { "executable": "postgres/bin/postgres.exe", "arguments": ["--version"] } },
+    { "id": "version.cache", "action": "command", "command": { "executable": "garnet/GarnetServer.exe", "arguments": ["--version"] } },
+    { "id": "version.java", "action": "command", "command": { "executable": "jre/bin/java.exe", "arguments": ["--version"] } },
+    { "id": "version.node", "action": "command", "command": { "executable": "node/node.exe", "arguments": ["--version"] } },
+    { "id": "version.chromium", "action": "command", "command": { "executable": "chromium/chrome.exe", "arguments": ["--version"] } },
+    { "id": "postgres.initialize", "action": "command", "command": { "executable": "postgres/bin/initdb.exe", "arguments": ["-D", "{{work_root}}/database", "--username=penpot", "--auth=trust", "--data-checksums", "--no-locale", "--encoding=UTF8"] } },
+    { "id": "postgres.start.first", "action": "start", "processId": "postgres", "command": { "executable": "postgres/bin/postgres.exe", "arguments": ["-D", "{{work_root}}/database", "-h", "127.0.0.1", "-p", "{{port.postgres}}"] }, "ready": { "host": "127.0.0.1", "port": "postgres", "timeoutSeconds": 30 } },
+    { "id": "postgres.create-database", "action": "command", "command": { "executable": "postgres/bin/createdb.exe", "arguments": ["-h", "127.0.0.1", "-p", "{{port.postgres}}", "-U", "penpot", "penpot"] } },
+    { "id": "cache.start", "action": "start", "processId": "cache", "command": { "executable": "garnet/GarnetServer.exe", "arguments": ["--address", "127.0.0.1", "--port", "{{port.cache}}", "--lua"] }, "ready": { "host": "127.0.0.1", "port": "cache", "timeoutSeconds": 30 } },
+    { "id": "cache.compatibility", "action": "cache_compatibility", "port": "cache" },
+    {
+      "id": "service.media-processor",
+      "action": "start",
+      "processId": "media-processor",
+      "command": {
+        "executable": "node/node.exe",
+        "arguments": ["{{runtime_root}}/media-processor/main.js"],
+        "environment": {
+          "PENPOT_MEDIA_PROCESSOR_HOST": "127.0.0.1",
+          "PENPOT_MEDIA_PROCESSOR_PORT": "{{port.media}}",
+          "PENPOT_MEDIA_PROCESSOR_SHARED_KEY": "desktop-compatibility-key",
+          "PENPOT_MEDIA_PROCESSOR_LOG_LEVEL": "info"
+        }
+      },
+      "ready": { "host": "127.0.0.1", "port": "media", "httpPath": "/api/health", "timeoutSeconds": 30 }
+    },
+    {
+      "id": "service.backend",
+      "action": "start",
+      "processId": "backend",
+      "command": {
+        "executable": "jre/bin/java.exe",
+        "arguments": ["--enable-preview", "-jar", "{{runtime_root}}/backend/penpot.jar", "-m", "app.main"],
+        "environment": {
+          "PENPOT_DATABASE_URI": "postgresql://127.0.0.1:{{port.postgres}}/penpot",
+          "PENPOT_DATABASE_USERNAME": "penpot",
+          "PENPOT_DATABASE_PASSWORD": "",
+          "PENPOT_REDIS_URI": "redis://127.0.0.1:{{port.cache}}/0",
+          "PENPOT_HTTP_SERVER_HOST": "127.0.0.1",
+          "PENPOT_HTTP_SERVER_PORT": "{{port.backend}}",
+          "PENPOT_PUBLIC_URI": "http://127.0.0.1:{{port.backend}}",
+          "PENPOT_SECRET_KEY": "desktop-compatibility-secret-key",
+          "PENPOT_MEDIA_PROCESSING_SERVICE_URI": "http://127.0.0.1:{{port.media}}",
+          "PENPOT_MEDIA_PROCESSOR_SHARED_KEY": "desktop-compatibility-key",
+          "PENPOT_OBJECTS_STORAGE_BACKEND": "fs",
+          "PENPOT_OBJECTS_STORAGE_FS_DIRECTORY": "{{work_root}}/assets",
+          "PENPOT_TELEMETRY_ENABLED": "false",
+          "PENPOT_FLAGS": "disable-email-verification disable-smtp"
+        },
+        "timeoutSeconds": 180
+      },
+      "ready": { "host": "127.0.0.1", "port": "backend", "httpPath": "/readyz", "timeoutSeconds": 180 }
+    },
+    { "id": "postgres.migrate", "action": "command", "command": { "executable": "postgres/bin/psql.exe", "arguments": ["-h", "127.0.0.1", "-p", "{{port.postgres}}", "-U", "penpot", "-d", "penpot", "-v", "ON_ERROR_STOP=1", "-Atc", "SELECT CASE WHEN EXISTS (SELECT FROM migrations) THEN 'migrations-ok' ELSE 'migrations-missing' END"], "stdoutContains": "migrations-ok" } },
+    {
+      "id": "service.exporter",
+      "action": "start",
+      "processId": "exporter",
+      "command": {
+        "executable": "node/node.exe",
+        "arguments": ["{{runtime_root}}/exporter/main.js"],
+        "environment": {
+          "PENPOT_HTTP_SERVER_HOST": "127.0.0.1",
+          "PENPOT_HTTP_SERVER_PORT": "{{port.exporter}}",
+          "PENPOT_PUBLIC_URI": "http://127.0.0.1:{{port.backend}}",
+          "PENPOT_INTERNAL_URI": "http://127.0.0.1:{{port.backend}}",
+          "PENPOT_REDIS_URI": "redis://127.0.0.1:{{port.cache}}/0",
+          "PENPOT_SECRET_KEY": "desktop-compatibility-secret-key",
+          "PENPOT_EXPORTER_SHARED_KEY": "desktop-compatibility-exporter-key",
+          "PENPOT_BROWSER_EXECUTABLE": "{{runtime_root}}/chromium/chrome.exe",
+          "PENPOT_TEMPDIR": "{{work_root}}/tmp"
+        }
+      },
+      "ready": { "host": "127.0.0.1", "port": "exporter", "httpPath": "/readyz", "timeoutSeconds": 60 }
+    },
+    { "id": "chromium.offline", "action": "command", "command": { "executable": "node/node.exe", "arguments": ["{{runtime_root}}/compat/check.mjs", "chromium", "{{runtime_root}}/chromium/chrome.exe", "{{work_root}}/artifacts/chromium.html"] }, "expectedArtifacts": [{ "path": "artifacts/chromium.html", "minimumBytes": 20 }] },
+    { "id": "export.png", "action": "command", "command": { "executable": "node/node.exe", "arguments": ["{{runtime_root}}/compat/check.mjs", "export", "http://127.0.0.1:{{port.exporter}}", "{{work_root}}/fixtures/export-png.json", "{{work_root}}/artifacts/export.png"] }, "expectedArtifacts": [{ "path": "artifacts/export.png", "minimumBytes": 32, "magicHex": "89504e47" }] },
+    { "id": "export.jpeg", "action": "command", "command": { "executable": "node/node.exe", "arguments": ["{{runtime_root}}/compat/check.mjs", "export", "http://127.0.0.1:{{port.exporter}}", "{{work_root}}/fixtures/export-jpeg.json", "{{work_root}}/artifacts/export.jpg"] }, "expectedArtifacts": [{ "path": "artifacts/export.jpg", "minimumBytes": 32, "magicHex": "ffd8ff" }] },
+    { "id": "export.webp", "action": "command", "command": { "executable": "node/node.exe", "arguments": ["{{runtime_root}}/compat/check.mjs", "export", "http://127.0.0.1:{{port.exporter}}", "{{work_root}}/fixtures/export-webp.json", "{{work_root}}/artifacts/export.webp"] }, "expectedArtifacts": [{ "path": "artifacts/export.webp", "minimumBytes": 32, "magicHex": "52494646" }] },
+    { "id": "export.svg", "action": "command", "command": { "executable": "node/node.exe", "arguments": ["{{runtime_root}}/compat/check.mjs", "export", "http://127.0.0.1:{{port.exporter}}", "{{work_root}}/fixtures/export-svg.json", "{{work_root}}/artifacts/export.svg"] }, "expectedArtifacts": [{ "path": "artifacts/export.svg", "minimumBytes": 32 }] },
+    { "id": "export.pdf", "action": "command", "command": { "executable": "node/node.exe", "arguments": ["{{runtime_root}}/compat/check.mjs", "export", "http://127.0.0.1:{{port.exporter}}", "{{work_root}}/fixtures/export-pdf.json", "{{work_root}}/artifacts/export.pdf"] }, "expectedArtifacts": [{ "path": "artifacts/export.pdf", "minimumBytes": 32, "magicHex": "25504446" }] },
+    { "id": "font.ttf", "action": "command", "command": { "executable": "node/node.exe", "arguments": ["{{runtime_root}}/compat/check.mjs", "font", "http://127.0.0.1:{{port.media}}", "{{runtime_root}}/compat/fixtures/font.ttf", "font/ttf", "font/woff", "{{work_root}}/artifacts/font-from-ttf.woff"] }, "expectedArtifacts": [{ "path": "artifacts/font-from-ttf.woff", "minimumBytes": 32, "magicHex": "774f4646" }] },
+    { "id": "font.otf", "action": "command", "command": { "executable": "node/node.exe", "arguments": ["{{runtime_root}}/compat/check.mjs", "font", "http://127.0.0.1:{{port.media}}", "{{runtime_root}}/compat/fixtures/font.otf", "font/otf", "font/ttf", "{{work_root}}/artifacts/font-from-otf.ttf"] }, "expectedArtifacts": [{ "path": "artifacts/font-from-otf.ttf", "minimumBytes": 32, "magicHex": "00010000" }] },
+    { "id": "font.woff", "action": "command", "command": { "executable": "node/node.exe", "arguments": ["{{runtime_root}}/compat/check.mjs", "font", "http://127.0.0.1:{{port.media}}", "{{runtime_root}}/compat/fixtures/font.woff", "font/woff", "font/ttf", "{{work_root}}/artifacts/font-from-woff.ttf"] }, "expectedArtifacts": [{ "path": "artifacts/font-from-woff.ttf", "minimumBytes": 32, "magicHex": "00010000" }] },
+    { "id": "font.woff2", "action": "command", "command": { "executable": "node/node.exe", "arguments": ["{{runtime_root}}/compat/check.mjs", "font", "http://127.0.0.1:{{port.media}}", "{{runtime_root}}/compat/fixtures/font.woff2", "font/woff2", "font/ttf", "{{work_root}}/artifacts/font-from-woff2.ttf"] }, "expectedArtifacts": [{ "path": "artifacts/font-from-woff2.ttf", "minimumBytes": 32, "magicHex": "00010000" }] },
+    { "id": "postgres.seed-persistence", "action": "command", "command": { "executable": "postgres/bin/psql.exe", "arguments": ["-h", "127.0.0.1", "-p", "{{port.postgres}}", "-U", "penpot", "-d", "penpot", "-v", "ON_ERROR_STOP=1", "-c", "CREATE TABLE desktop_compatibility(value text PRIMARY KEY); INSERT INTO desktop_compatibility VALUES ('restart-ok');"] } },
+    { "id": "stop.exporter", "action": "stop", "processId": "exporter" },
+    { "id": "stop.backend", "action": "stop", "processId": "backend" },
+    { "id": "stop.media-processor", "action": "stop", "processId": "media-processor" },
+    { "id": "stop.cache", "action": "stop", "processId": "cache" },
+    { "id": "postgres.stop", "action": "stop", "processId": "postgres", "command": { "executable": "postgres/bin/pg_ctl.exe", "arguments": ["-D", "{{work_root}}/database", "-m", "fast", "-w", "stop"] } },
+    { "id": "postgres.restart", "action": "start", "processId": "postgres", "command": { "executable": "postgres/bin/postgres.exe", "arguments": ["-D", "{{work_root}}/database", "-h", "127.0.0.1", "-p", "{{port.postgres}}"] }, "ready": { "host": "127.0.0.1", "port": "postgres", "timeoutSeconds": 30 } },
+    { "id": "postgres.persistence", "action": "command", "command": { "executable": "postgres/bin/psql.exe", "arguments": ["-h", "127.0.0.1", "-p", "{{port.postgres}}", "-U", "penpot", "-d", "penpot", "-v", "ON_ERROR_STOP=1", "-Atc", "SELECT value FROM desktop_compatibility WHERE value = 'restart-ok'"], "stdoutContains": "restart-ok" } },
+    { "id": "postgres.final-stop", "action": "stop", "processId": "postgres", "command": { "executable": "postgres/bin/pg_ctl.exe", "arguments": ["-D", "{{work_root}}/database", "-m", "fast", "-w", "stop"] } }
+  ]
+}

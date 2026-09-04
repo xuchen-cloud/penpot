@@ -17,3 +17,7 @@ pnpm run dev
 The runtime binaries are not stored in Git. Release jobs assemble the pinned
 runtime under `src-tauri/resources/runtime/<target-triple>/` before packaging.
 The checked-in runtime manifest defines the required files for each target.
+
+The stage-one command-line compatibility gate lives in
+[`compatibility/`](compatibility/README.md). It must pass on both release
+targets before work starts on the bootable local stack.

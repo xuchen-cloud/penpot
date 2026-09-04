@@ -6,7 +6,13 @@
         {
           "id": "postgres",
           "executable": "postgres/bin/postgres",
-          "requiredFiles": ["postgres/bin/initdb", "postgres/bin/pg_dump"]
+          "requiredFiles": [
+            "postgres/bin/initdb",
+            "postgres/bin/createdb",
+            "postgres/bin/pg_ctl",
+            "postgres/bin/pg_dump",
+            "postgres/bin/psql"
+          ]
         },
         {
           "id": "cache",
@@ -19,6 +25,7 @@
             "media-processor/main.js",
             "tools/bin/fontforge",
             "tools/bin/sfnt2woff",
+            "tools/bin/woff2sfnt",
             "tools/bin/woff2_decompress"
           ]
         },
@@ -33,6 +40,11 @@
           "executable": "node/bin/node",
           "requiredFiles": [
             "exporter/main.js",
+            "compat/check.mjs",
+            "compat/fixtures/font.ttf",
+            "compat/fixtures/font.otf",
+            "compat/fixtures/font.woff",
+            "compat/fixtures/font.woff2",
             "chromium/Chromium.app/Contents/MacOS/Chromium",
             "tools/bin/convert",
             "tools/bin/potrace"
@@ -46,7 +58,13 @@
         {
           "id": "postgres",
           "executable": "postgres/bin/postgres.exe",
-          "requiredFiles": ["postgres/bin/initdb.exe", "postgres/bin/pg_dump.exe"]
+          "requiredFiles": [
+            "postgres/bin/initdb.exe",
+            "postgres/bin/createdb.exe",
+            "postgres/bin/pg_ctl.exe",
+            "postgres/bin/pg_dump.exe",
+            "postgres/bin/psql.exe"
+          ]
         },
         {
           "id": "cache",
@@ -59,6 +77,7 @@
             "media-processor/main.js",
             "tools/fontforge.exe",
             "tools/sfnt2woff.exe",
+            "tools/woff2sfnt.exe",
             "tools/woff2_decompress.exe"
           ]
         },
@@ -73,6 +92,11 @@
           "executable": "node/node.exe",
           "requiredFiles": [
             "exporter/main.js",
+            "compat/check.mjs",
+            "compat/fixtures/font.ttf",
+            "compat/fixtures/font.otf",
+            "compat/fixtures/font.woff",
+            "compat/fixtures/font.woff2",
             "chromium/chrome.exe",
             "tools/magick.exe",
             "tools/potrace.exe"

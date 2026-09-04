@@ -1,3 +1,4 @@
+pub mod compatibility;
 pub mod config;
 pub mod error;
 pub mod gateway;

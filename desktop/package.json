@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tauri dev",
     "build": "tauri build",
+    "build:compat": "cargo build --locked --manifest-path src-tauri/Cargo.toml --bin penpot-desktop-compat",
     "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml",
     "check:rust": "cargo check --manifest-path src-tauri/Cargo.toml",
     "fmt:rust": "cargo fmt --manifest-path src-tauri/Cargo.toml -- --check"
