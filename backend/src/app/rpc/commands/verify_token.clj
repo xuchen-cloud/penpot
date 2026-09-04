@@ -205,6 +205,7 @@
                                         {:id profile-id}
                                         {:columns [:id :email :default-team-id]})
         registration-disabled? (not (contains? cf/flags :registration))
+        standalone-enabled?    (true? (cf/get :standalone-enabled false))
 
         organization-invitation?        (and (contains? cf/flags :admin-console) organization-id)]
 
@@ -346,12 +347,16 @@
                             "the invitation has been canceled"
                             "no invitation associated with the token")))
 
-        ;; If we have not logged-in user, and invitation comes with member-id we
-        ;; redirect user to login, if no member-id is present and  in the invitation
-        ;; token and registration is enabled, we redirect user the the register page.
+        ;; Existing members must log in so the invitation identity can be checked.
+        ;; New members may register from this still-pending invitation even when
+        ;; public registration is disabled.
         {:invitation-token token
          :iss :team-invitation
-         :redirect-to (if (or member-id registration-disabled?) :auth-login :auth-register)
+         :redirect-to (if (or member-id
+                              (and registration-disabled?
+                                   (not standalone-enabled?)))
+                        :auth-login
+                        :auth-register)
          :state :pending}))))
 
 ;; --- Default

@@ -32,7 +32,7 @@
    [app.rpc.commands.teams :as teams]
    [app.rpc.doc :as-alias doc]
    [app.rpc.helpers :as rph]
-   [app.setup :as-alias setup]
+   [app.setup :as setup]
    [app.setup.welcome-file :refer [create-welcome-file]]
    [app.storage :as sto]
    [app.tokens :as tokens]
@@ -205,66 +205,116 @@
 
 ;; ---- COMMAND: Prepare Register
 
-(defn- validate-register-attempt!
-  [cfg params]
+(def ^:private standalone-bootstrap-skey
+  "standalone-bootstrap-complete")
 
-  (when (or (not (contains? cf/flags :registration))
-            (not (contains? cf/flags :login-with-password)))
+(defn- get-pending-invitation
+  [{:keys [::db/pool ::db/conn]}
+   {:keys [team-id organization-id member-email]}]
+  (let [db-source  (or conn pool)
+        invitation (cond
+                     organization-id
+                     (db/get* db-source :team-invitation
+                              {:email-to member-email
+                               :org-id organization-id})
+
+                     team-id
+                     (db/get* db-source :team-invitation
+                              {:email-to member-email
+                               :team-id team-id}))]
+    (when (and invitation
+               (ct/is-after? (:valid-until invitation) (ct/now)))
+      invitation)))
+
+(defn- standalone-bootstrap-available?
+  [{:keys [::db/pool]} email]
+  (let [admin-email (cf/get :standalone-admin-email)]
+    (and (true? (cf/get :standalone-enabled false))
+         (some? admin-email)
+         (= (profile/clean-email admin-email)
+            (profile/clean-email email))
+         (nil? (db/get* pool :server-prop
+                        {:id standalone-bootstrap-skey})))))
+
+(defn- validate-register-invitation!
+  [cfg {:keys [email invitation-token]}]
+  (when invitation-token
+    (let [invitation (tokens/verify cfg
+                                    {:token invitation-token
+                                     :iss :team-invitation})]
+      (when-not (= email (:member-email invitation))
+        (ex/raise :type :restriction
+                  :code :email-does-not-match-invitation
+                  :hint "email should match the invitation"))
+      invitation)))
+
+(defn- get-registration-source
+  [cfg params]
+  (when-not (contains? cf/flags :login-with-password)
     (ex/raise :type :restriction
               :code :registration-disabled
               :hint "registration disabled"))
+  (let [invitation          (validate-register-invitation! cfg params)
+        pending-invitation? (and invitation
+                                 (some? (get-pending-invitation cfg invitation)))
+        bootstrap?          (standalone-bootstrap-available? cfg (:email params))]
+    (cond
+      (contains? cf/flags :registration) :public
+      (and (true? (cf/get :standalone-enabled false))
+           pending-invitation?) :invitation
+      bootstrap? :standalone-bootstrap
+      :else
+      (ex/raise :type :restriction
+                :code :registration-disabled
+                :hint "registration disabled"))))
 
-  (when (contains? params :invitation-token)
-    (let [invitation (tokens/verify cfg
-                                    {:token (:invitation-token params)
-                                     :iss :team-invitation})]
-      (when-not (= (:email params) (:member-email invitation))
-        (ex/raise :type :restriction
-                  :code :email-does-not-match-invitation
-                  :hint "email should match the invitation"))))
+(defn- validate-register-attempt!
+  [cfg params]
+  (let [registration-source (get-registration-source cfg params)]
 
-  (when (and (email.blacklist/enabled? cfg)
-             (email.blacklist/contains? cfg (:email params)))
-    (ex/raise :type :restriction
-              :code :email-domain-is-not-allowed
-              :hint "email domain in blacklist"))
+    (when (and (email.blacklist/enabled? cfg)
+               (email.blacklist/contains? cfg (:email params)))
+      (ex/raise :type :restriction
+                :code :email-domain-is-not-allowed
+                :hint "email domain in blacklist"))
 
-  (when (and (email.whitelist/enabled? cfg)
-             (not (email.whitelist/contains? cfg (:email params))))
-    (ex/raise :type :restriction
-              :code :email-domain-is-not-allowed
-              :hint "email domain not in whitelist"))
+    (when (and (email.whitelist/enabled? cfg)
+               (not (email.whitelist/contains? cfg (:email params))))
+      (ex/raise :type :restriction
+                :code :email-domain-is-not-allowed
+                :hint "email domain not in whitelist"))
 
-  ;; Perform a basic validation of email & password
-  (when (= (str/lower (:email params))
-           (str/lower (:password params)))
-    (ex/raise :type :validation
-              :code :email-as-password
-              :hint "you can't use your email as password"))
+    ;; Perform a basic validation of email & password
+    (when (= (str/lower (:email params))
+             (str/lower (:password params)))
+      (ex/raise :type :validation
+                :code :email-as-password
+                :hint "you can't use your email as password"))
 
-  ;; Validate password strength against common password dictionary
-  (passwords/validate-password (:password params))
+    ;; Validate password strength against common password dictionary
+    (passwords/validate-password (:password params))
 
-  (when (eml/has-bounce-reports? cfg (:email params))
-    (ex/raise :type :restriction
-              :code :email-has-permanent-bounces
-              :email (:email params)
-              :hint "email has bounce reports"))
+    (when (eml/has-bounce-reports? cfg (:email params))
+      (ex/raise :type :restriction
+                :code :email-has-permanent-bounces
+                :email (:email params)
+                :hint "email has bounce reports"))
 
-  (when (eml/has-complaint-reports? cfg (:email params))
-    (ex/raise :type :restriction
-              :code :email-has-complaints
-              :email (:email params)
-              :hint "email has complaint reports")))
+    (when (eml/has-complaint-reports? cfg (:email params))
+      (ex/raise :type :restriction
+                :code :email-has-complaints
+                :email (:email params)
+                :hint "email has complaint reports"))
+
+    registration-source))
 
 (defn prepare-register
   [{:keys [::db/pool] :as cfg} {:keys [fullname email] :as params}]
 
-  (validate-register-attempt! cfg params)
-
-  (let [email   (profile/clean-email email)
-        profile (profile/get-profile-by-email pool email)
-        fullname (d/normalize-string fullname)]
+  (let [registration-source (validate-register-attempt! cfg params)
+        email               (profile/clean-email email)
+        profile             (profile/get-profile-by-email pool email)
+        fullname            (d/normalize-string fullname)]
 
     ;; SECURITY: refuse to issue a prepared-register token when an active
     ;; profile already exists for this email.
@@ -297,6 +347,12 @@
                   :iss :prepared-register
                   :exp (ct/in-future {:days 7})
                   :props props}
+          params (cond-> params
+                   (= registration-source :standalone-bootstrap)
+                   (assoc :standalone-bootstrap true)
+
+                   (= registration-source :invitation)
+                   (assoc :invite-only true))
           params (d/without-nils params)
           token  (tokens/generate cfg params)]
 
@@ -448,6 +504,31 @@
 (defn register-profile
   [{:keys [::db/conn ::wrk/executor] :as cfg} {:keys [token] :as params}]
   (let [claims     (tokens/verify cfg {:token token :iss :prepared-register})
+
+        invitation (when-let [token (:invitation-token claims)]
+                     (tokens/verify cfg {:token token :iss :team-invitation}))
+
+        _           (when (or (:invite-only claims)
+                              (:standalone-bootstrap claims))
+                      (when-not (true? (cf/get :standalone-enabled false))
+                        (ex/raise :type :restriction
+                                  :code :registration-disabled
+                                  :hint "standalone registration is disabled")))
+
+        _           (when (:invite-only claims)
+                      (when-not (get-pending-invitation cfg invitation)
+                        (ex/raise :type :restriction
+                                  :code :registration-disabled
+                                  :hint "invitation is no longer pending")))
+
+        _           (when (and (:standalone-bootstrap claims)
+                               (not (standalone-bootstrap-available?
+                                     cfg
+                                     (:email claims))))
+                      (ex/raise :type :restriction
+                                :code :registration-disabled
+                                :hint "standalone bootstrap is no longer available"))
+
         params     (cond-> claims
                      (:accept-newsletter-updates params)
                      (update :props assoc :newsletter-updates true))
@@ -465,8 +546,19 @@
 
         created?   (-> profile meta :created true?)
 
-        invitation (when-let [token (:invitation-token params)]
-                     (tokens/verify cfg {:token token :iss :team-invitation}))
+        _           (when-let [admin-email (and created?
+                                                (:standalone-bootstrap claims)
+                                                (cf/get :standalone-admin-email))]
+                      (when (= (profile/clean-email admin-email)
+                               (:email profile))
+                        (let [value (db/tjson true)]
+                          (db/exec-one! conn
+                                        [setup/sql:add-prop
+                                         standalone-bootstrap-skey
+                                         value
+                                         false
+                                         value
+                                         false]))))
 
         props      (-> (audit/profile->props profile)
                        (assoc :from-invitation (some? invitation)))

@@ -92,6 +92,9 @@ opencode.json
 /playwright/.cache/
 /render-wasm/target/
 /media-processor/dist/
+/desktop/src-tauri/target/
+/desktop/src-tauri/gen/
+/desktop/src-tauri/resources/runtime/
 /**/node_modules
 /**/.yarn/*
 /.pnpm-store

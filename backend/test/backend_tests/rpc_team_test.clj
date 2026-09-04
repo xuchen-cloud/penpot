@@ -463,6 +463,55 @@
             (t/is (= :validation (:type edata)))
             (t/is (= :invalid-token (:code edata)))))))))
 
+(t/deftest anonymous-new-user-invitation-allows-invite-only-registration
+  (let [owner  (th/create-profile* 301 {:is-active true})
+        team   (th/create-team* 301 {:profile-id (:id owner)})
+        pool   (:app.db/pool th/*system*)
+        email  "invited-user@example.com"
+        token  (tokens/generate th/*system*
+                                {:iss :team-invitation
+                                 :exp (ct/in-future "48h")
+                                 :profile-id (:id owner)
+                                 :role :editor
+                                 :team-id (:id team)
+                                 :member-email email})]
+    (db/insert! pool :team-invitation
+                {:team-id (:id team)
+                 :email-to email
+                 :role "editor"
+                 :valid-until (ct/in-future "48h")})
+
+    (binding [cf/config (assoc cf/config :standalone-enabled true)]
+      (with-redefs [cf/flags #{:login-with-password}]
+        (let [out (th/command! {::th/type :verify-token
+                                :token token})]
+          (t/is (th/success? out))
+          (t/is (= :auth-register (get-in out [:result :redirect-to]))))))))
+
+(t/deftest anonymous-invitation-keeps-login-redirect-outside-standalone-mode
+  (let [owner  (th/create-profile* 304 {:is-active true})
+        team   (th/create-team* 304 {:profile-id (:id owner)})
+        pool   (:app.db/pool th/*system*)
+        email  "server-invite@example.com"
+        token  (tokens/generate th/*system*
+                                {:iss :team-invitation
+                                 :exp (ct/in-future "48h")
+                                 :profile-id (:id owner)
+                                 :role :editor
+                                 :team-id (:id team)
+                                 :member-email email})]
+    (db/insert! pool :team-invitation
+                {:team-id (:id team)
+                 :email-to email
+                 :role "editor"
+                 :valid-until (ct/in-future "48h")})
+
+    (with-redefs [cf/flags #{:login-with-password}]
+      (let [out (th/command! {::th/type :verify-token
+                              :token token})]
+        (t/is (th/success? out))
+        (t/is (= :auth-login (get-in out [:result :redirect-to])))))))
+
 (t/deftest accept-organization-invitation-audit-event
   (with-mocks [audit-mock {:target 'app.loggers.audit/submit :return nil}]
     (let [inviter          (th/create-profile* 201 {:is-active true})

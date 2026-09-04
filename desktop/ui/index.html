@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Penpot Desktop</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="brand" aria-labelledby="app-title">
+        <div class="mark" aria-hidden="true">P</div>
+        <div>
+          <p class="eyebrow">OFFLINE WORKSPACE</p>
+          <h1 id="app-title">Penpot Desktop</h1>
+          <p class="summary">Your Penpot services and files stay on this computer.</p>
+        </div>
+      </section>
+
+      <section class="status-card" aria-live="polite">
+        <div>
+          <p class="label">Runtime status</p>
+          <p class="status" id="status">Checking…</p>
+        </div>
+        <span class="indicator" id="indicator" aria-hidden="true"></span>
+      </section>
+
+      <p class="details" id="details"></p>
+      <form id="initialize" class="initialize" hidden>
+        <label for="admin-email">First administrator email</label>
+        <div class="initialize-row">
+          <input
+            id="admin-email"
+            name="adminEmail"
+            type="email"
+            autocomplete="email"
+            placeholder="admin@example.com"
+            required
+          />
+          <button type="submit">Initialize this computer</button>
+        </div>
+      </form>
+    </main>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

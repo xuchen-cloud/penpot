@@ -105,6 +105,8 @@
    [:map {:title "config"}
     [:flags {:optional true} [::sm/set :string]]
     [:admins {:optional true} [::sm/set ::sm/email]]
+    [:standalone-enabled {:optional true} ::sm/boolean]
+    [:standalone-admin-email {:optional true} ::sm/email]
     [:secret-key {:optional true} :string]
 
     [:tenant {:optional false} :string]

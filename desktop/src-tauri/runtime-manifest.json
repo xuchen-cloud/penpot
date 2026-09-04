@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "targets": {
+    "aarch64-apple-darwin": {
+      "components": [
+        {
+          "id": "postgres",
+          "executable": "postgres/bin/postgres",
+          "requiredFiles": ["postgres/bin/initdb", "postgres/bin/pg_dump"]
+        },
+        {
+          "id": "cache",
+          "executable": "valkey/bin/valkey-server"
+        },
+        {
+          "id": "media-processor",
+          "executable": "node/bin/node",
+          "requiredFiles": [
+            "media-processor/main.js",
+            "tools/bin/fontforge",
+            "tools/bin/sfnt2woff",
+            "tools/bin/woff2_decompress"
+          ]
+        },
+        {
+          "id": "backend",
+          "executable": "jre/bin/java",
+          "requiredFiles": ["backend/penpot.jar"],
+          "dependsOn": ["postgres", "cache", "media-processor"]
+        },
+        {
+          "id": "exporter",
+          "executable": "node/bin/node",
+          "requiredFiles": [
+            "exporter/main.js",
+            "chromium/Chromium.app/Contents/MacOS/Chromium",
+            "tools/bin/convert",
+            "tools/bin/potrace"
+          ],
+          "dependsOn": ["backend", "cache"]
+        }
+      ]
+    },
+    "x86_64-pc-windows-msvc": {
+      "components": [
+        {
+          "id": "postgres",
+          "executable": "postgres/bin/postgres.exe",
+          "requiredFiles": ["postgres/bin/initdb.exe", "postgres/bin/pg_dump.exe"]
+        },
+        {
+          "id": "cache",
+          "executable": "garnet/GarnetServer.exe"
+        },
+        {
+          "id": "media-processor",
+          "executable": "node/node.exe",
+          "requiredFiles": [
+            "media-processor/main.js",
+            "tools/fontforge.exe",
+            "tools/sfnt2woff.exe",
+            "tools/woff2_decompress.exe"
+          ]
+        },
+        {
+          "id": "backend",
+          "executable": "jre/bin/java.exe",
+          "requiredFiles": ["backend/penpot.jar"],
+          "dependsOn": ["postgres", "cache", "media-processor"]
+        },
+        {
+          "id": "exporter",
+          "executable": "node/node.exe",
+          "requiredFiles": [
+            "exporter/main.js",
+            "chromium/chrome.exe",
+            "tools/magick.exe",
+            "tools/potrace.exe"
+          ],
+          "dependsOn": ["backend", "cache"]
+        }
+      ]
+    }
+  }
+}

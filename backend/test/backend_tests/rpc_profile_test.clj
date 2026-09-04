@@ -769,27 +769,60 @@
       (t/is (= :email-does-not-match-invitation (:code edata))))))
 
 (t/deftest prepare-and-register-with-invitation-and-disabled-registration-1
-  (with-redefs [app.config/flags [:disable-registration]]
-    (let [itoken (tokens/generate th/*system*
-                                  {:iss :team-invitation
-                                   :exp (ct/in-future "48h")
-                                   :role :editor
-                                   :team-id uuid/zero
-                                   :member-email "user@example.com"})
-          data  {::th/type :prepare-register-profile
-                 :invitation-token itoken
-                 :fullname "foobar"
-                 :email "user@example.com"
-                 :password "Foobar12!"}
-          out (th/command! data)]
+  (binding [cf/config (assoc cf/config :standalone-enabled true)]
+    (with-redefs [app.config/flags #{:login-with-password}]
+      (let [owner   (th/create-profile* 301 {:is-active true})
+            team    (th/create-team* 301 {:profile-id (:id owner)})
+            _       (db/insert! (:app.db/pool th/*system*)
+                                :team-invitation
+                                {:team-id (:id team)
+                                 :email-to "user@example.com"
+                                 :role "editor"
+                                 :valid-until (ct/in-future "48h")})
+            itoken (tokens/generate th/*system*
+                                    {:iss :team-invitation
+                                     :exp (ct/in-future "48h")
+                                     :role :editor
+                                     :team-id (:id team)
+                                     :member-email "user@example.com"})
+            data  {::th/type :prepare-register-profile
+                   :invitation-token itoken
+                   :fullname "foobar"
+                   :email "user@example.com"
+                   :password "Foobar12!"}
+            out (th/command! data)]
 
+        (t/is (th/success? out))
+        (t/is (string? (get-in out [:result :token])))))))
+
+(t/deftest invitation-does-not-enable-registration-outside-standalone-mode
+  (with-redefs [app.config/flags #{:login-with-password}]
+    (let [owner   (th/create-profile* 303 {:is-active true})
+          team    (th/create-team* 303 {:profile-id (:id owner)})
+          email   "server-invite@example.com"
+          _       (db/insert! (:app.db/pool th/*system*)
+                              :team-invitation
+                              {:team-id (:id team)
+                               :email-to email
+                               :role "editor"
+                               :valid-until (ct/in-future "48h")})
+          itoken  (tokens/generate th/*system*
+                                   {:iss :team-invitation
+                                    :exp (ct/in-future "48h")
+                                    :role :editor
+                                    :team-id (:id team)
+                                    :member-email email})
+          out     (th/command! {::th/type :prepare-register-profile
+                                :invitation-token itoken
+                                :fullname "Server Invite"
+                                :email email
+                                :password "Foobar12!"})]
       (t/is (not (th/success? out)))
-      (let [edata (-> out :error ex-data)]
-        (t/is (= :restriction (:type edata)))
-        (t/is (= :registration-disabled (:code edata)))))))
+      (t/is (= :registration-disabled
+               (-> out :error ex-data :code))))))
 
 (t/deftest prepare-and-register-with-invitation-and-disabled-registration-2
-  (with-redefs [app.config/flags [:disable-registration]]
+  (with-redefs [app.config/flags #{:login-with-password}]
     (let [itoken (tokens/generate th/*system*
                                   {:iss :team-invitation
                                    :exp (ct/in-future "48h")
@@ -807,7 +840,97 @@
       (t/is (not (th/success? out)))
       (let [edata (-> out :error ex-data)]
         (t/is (= :restriction (:type edata)))
+        (t/is (= :email-does-not-match-invitation (:code edata)))))))
+
+(t/deftest prepare-register-with-revoked-invitation-and-disabled-registration
+  (with-redefs [app.config/flags #{:login-with-password}]
+    (let [itoken (tokens/generate th/*system*
+                                  {:iss :team-invitation
+                                   :exp (ct/in-future "48h")
+                                   :role :editor
+                                   :team-id uuid/zero
+                                   :member-email "user@example.com"})
+          data   {::th/type :prepare-register-profile
+                  :invitation-token itoken
+                  :fullname "foobar"
+                  :email "user@example.com"
+                  :password "Foobar12!"}
+          out    (th/command! data)]
+
+      (t/is (not (th/success? out)))
+      (let [edata (-> out :error ex-data)]
+        (t/is (= :restriction (:type edata)))
         (t/is (= :registration-disabled (:code edata)))))))
+
+(t/deftest invite-only-registration-is-rechecked-before-profile-creation
+  (binding [cf/config (assoc cf/config :standalone-enabled true)]
+    (with-redefs [app.config/flags #{:login-with-password}]
+      (let [owner   (th/create-profile* 302 {:is-active true})
+            team    (th/create-team* 302 {:profile-id (:id owner)})
+            pool    (:app.db/pool th/*system*)
+            email   "revoked@example.com"
+            _       (db/insert! pool
+                                :team-invitation
+                                {:team-id (:id team)
+                                 :email-to email
+                                 :role "editor"
+                                 :valid-until (ct/in-future "48h")})
+            itoken  (tokens/generate th/*system*
+                                     {:iss :team-invitation
+                                      :exp (ct/in-future "48h")
+                                      :role :editor
+                                      :team-id (:id team)
+                                      :member-email email})
+            prep    (th/command! {::th/type :prepare-register-profile
+                                  :invitation-token itoken
+                                  :fullname "Revoked User"
+                                  :email email
+                                  :password "Foobar12!"})
+            token   (get-in prep [:result :token])]
+        (t/is (th/success? prep))
+        (db/delete! pool :team-invitation
+                    {:team-id (:id team)
+                     :email-to email})
+
+        (let [registration (th/command! {::th/type :register-profile
+                                         :token token})]
+          (t/is (not (th/success? registration)))
+          (t/is (= :registration-disabled
+                   (-> registration :error ex-data :code)))
+          (t/is (nil? (th/db-get :profile {:email email}))))))))
+
+(t/deftest invite-only-token-cannot-register-after-standalone-is-disabled
+  (binding [cf/config (assoc cf/config :standalone-enabled true)]
+    (with-redefs [app.config/flags #{:login-with-password}]
+      (let [owner   (th/create-profile* 304 {:is-active true})
+            team    (th/create-team* 304 {:profile-id (:id owner)})
+            email   "disabled-standalone-invite@example.com"
+            _       (db/insert! (:app.db/pool th/*system*)
+                                :team-invitation
+                                {:team-id (:id team)
+                                 :email-to email
+                                 :role "editor"
+                                 :valid-until (ct/in-future "48h")})
+            itoken  (tokens/generate th/*system*
+                                     {:iss :team-invitation
+                                      :exp (ct/in-future "48h")
+                                      :role :editor
+                                      :team-id (:id team)
+                                      :member-email email})
+            prep    (th/command! {::th/type :prepare-register-profile
+                                  :invitation-token itoken
+                                  :fullname "Invited User"
+                                  :email email
+                                  :password "Foobar12!"})
+            token   (get-in prep [:result :token])]
+        (t/is (th/success? prep))
+        (binding [cf/config (assoc cf/config :standalone-enabled false)]
+          (let [registration (th/command! {::th/type :register-profile
+                                           :token token})]
+            (t/is (not (th/success? registration)))
+            (t/is (= :registration-disabled
+                     (-> registration :error ex-data :code)))
+            (t/is (nil? (th/db-get :profile {:email email})))))))))
 
 (t/deftest prepare-and-register-with-invitation-and-disabled-login-with-password
   (with-redefs [app.config/flags [:disable-login-with-password]]
@@ -842,6 +965,77 @@
       (let [edata (-> out :error ex-data)]
         (t/is (= :restriction (:type edata)))
         (t/is (= :registration-disabled (:code edata)))))))
+
+(t/deftest standalone-admin-can-register-once-while-public-registration-is-disabled
+  (binding [cf/config (assoc cf/config
+                             :standalone-enabled true
+                             :standalone-admin-email "admin@example.com")]
+    (with-redefs [cf/flags #{:login-with-password}]
+      (let [data  {::th/type :prepare-register-profile
+                   :fullname "Desktop Admin"
+                   :email "ADMIN@example.com"
+                   :password "Foobar12!"}
+            prep  (th/command! data)
+            token (get-in prep [:result :token])]
+        (t/is (th/success? prep))
+        (t/is (string? token))
+
+        (let [registration (th/command! {::th/type :register-profile
+                                         :token token})]
+          (t/is (th/success? registration))
+          (t/is (some? (th/db-get :server-prop
+                                  {:id "standalone-bootstrap-complete"}))))
+
+        (let [retry (th/command! data)]
+          (t/is (not (th/success? retry)))
+          (t/is (= :registration-disabled
+                   (-> retry :error ex-data :code))))))))
+
+(t/deftest standalone-bootstrap-rejects-an-email-other-than-the-configured-admin
+  (binding [cf/config (assoc cf/config
+                             :standalone-enabled true
+                             :standalone-admin-email "admin@example.com")]
+    (with-redefs [cf/flags #{:login-with-password}]
+      (let [out (th/command! {::th/type :prepare-register-profile
+                              :fullname "Not Admin"
+                              :email "other@example.com"
+                              :password "Foobar12!"})]
+        (t/is (not (th/success? out)))
+        (t/is (= :registration-disabled
+                 (-> out :error ex-data :code)))))))
+
+(t/deftest standalone-bootstrap-requires-standalone-mode
+  (binding [cf/config (assoc cf/config
+                             :standalone-enabled false
+                             :standalone-admin-email "admin@example.com")]
+    (with-redefs [cf/flags #{:login-with-password}]
+      (let [out (th/command! {::th/type :prepare-register-profile
+                              :fullname "Desktop Admin"
+                              :email "admin@example.com"
+                              :password "Foobar12!"})]
+        (t/is (not (th/success? out)))
+        (t/is (= :registration-disabled
+                 (-> out :error ex-data :code)))))))
+
+(t/deftest standalone-bootstrap-token-cannot-register-after-mode-is-disabled
+  (binding [cf/config (assoc cf/config
+                             :standalone-enabled true
+                             :standalone-admin-email "restart-admin@example.com")]
+    (with-redefs [cf/flags #{:login-with-password}]
+      (let [email "restart-admin@example.com"
+            prep  (th/command! {::th/type :prepare-register-profile
+                                :fullname "Desktop Admin"
+                                :email email
+                                :password "Foobar12!"})
+            token (get-in prep [:result :token])]
+        (t/is (th/success? prep))
+        (binding [cf/config (assoc cf/config :standalone-enabled false)]
+          (let [registration (th/command! {::th/type :register-profile
+                                           :token token})]
+            (t/is (not (th/success? registration)))
+            (t/is (= :registration-disabled
+                     (-> registration :error ex-data :code)))
+            (t/is (nil? (th/db-get :profile {:email email})))))))))
 
 (t/deftest prepare-register-with-existing-user
   (let [profile (th/create-profile* 1)

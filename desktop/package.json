@@ -1,0 +1,16 @@
+{
+  "name": "@penpot/desktop",
+  "version": "2.17.0-desktop.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml",
+    "check:rust": "cargo check --manifest-path src-tauri/Cargo.toml",
+    "fmt:rust": "cargo fmt --manifest-path src-tauri/Cargo.toml -- --check"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.11.4"
+  }
+}
