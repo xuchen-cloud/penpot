@@ -2,10 +2,12 @@
 
 ## HARD RULES (always apply — no exceptions)
 
-- **Never `git push`, force-push, or modify `git origin`** (or any other remote).
-  The user pushes from their own shell. If a push is required to surface the
-  agent's work (e.g. force-push after an amend), state this in the response and
-  wait for the user to push. Do not change the remote URL, do not switch SSH↔HTTPS.
+- **Do not `git push` unless the user explicitly requests a push in the current
+  task.** An explicit request authorizes only a normal push of the in-scope
+  branches to the verified user-owned remote, `xuchen-cloud/penpot`. Before an
+  allowed push, run `git remote get-url origin`, confirm the owner and repository,
+  confirm the intended branches and clean worktrees, and use an explicit remote
+  and refspec. Never force-push or modify any remote URL.
 - **Never create or modify issues or pull requests in the upstream
   `penpot/penpot` repository unless the user explicitly names that repository.**
   The default write target for this workspace is the user's repository,
@@ -31,6 +33,14 @@
   - Before `gh pr create` / `gh pr edit` → `mem:workflow/creating-prs` (title format, body structure, AI note)
   Don't infer format from the title of a previous commit/issue/PR — the memory
   is the source of truth.
+- **Use the branch-review-merge workflow for changes unless the user explicitly
+  asks for a different workflow.** Start from the intended target branch, create
+  a `codex/` topic branch, implement and test there, commit the topic branch, then
+  run the `$code-review` two-axis review against the target branch: Standards and
+  Spec. Fix blocking findings and repeat the affected review before merging the
+  reviewed topic branch into the local target branch. Do not treat tests as a
+  substitute for either review axis. Creating a PR still requires an explicit
+  request, and pushing still requires an explicit request as defined above.
 
 ## CRITICAL: Read module memories BEFORE writing any code
 

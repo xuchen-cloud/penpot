@@ -10,11 +10,11 @@ You are working on the GitHub project `penpot/penpot`, a monorepo.
 
 # Development workflow
 
-- Commit/PR/issue creation is **on explicit request only**. Before any of these actions, read the relevant memory — don't infer format from prior examples:
+- Issue and PR creation is **on explicit request only**. For code and documentation changes, use the default topic-branch workflow unless the user explicitly requests a different workflow: create a `codex/` branch from the intended target, implement and test, commit the branch, run the `$code-review` Standards and Spec axes against the target, fix blocking findings, then merge the reviewed branch into the local target. Before any commit, issue, or PR action, read the relevant memory — don't infer format from prior examples:
   - Before `git commit` → `mem:workflow/creating-commits` (subject format, body, `AI-assisted-by: model-name` trailer)
   - Before `gh issue create` → `mem:workflow/creating-issues` (title derivation, body template, labels, Issue Type)
   - Before `gh pr create` / `gh pr edit` → `mem:workflow/creating-prs` (title format, body structure, "Note:" line)
-- **Never `git push`, force-push, or modify `git origin`** (or any other remote). The user pushes from their own shell; if a push is required, say so and wait. Never amend a commit that the user has already pushed unless explicitly asked.
+- **Do not `git push` unless the user explicitly requests a push in the current task.** An allowed push must use an explicit refspec and the verified user-owned `xuchen-cloud/penpot` remote. Never force-push, change a remote URL, or write to upstream `penpot/penpot`. Never amend a commit that the user has already pushed unless explicitly asked.
 - You have access to the GitHub CLI `gh` or corresponding MCP tools.
 - Issues are also managed on Taiga. Read issues using the `read_taiga_issue` tool.
 - Before writing code, analyze the task in depth and describe your plan. If the task is complex, break it down into atomic steps.

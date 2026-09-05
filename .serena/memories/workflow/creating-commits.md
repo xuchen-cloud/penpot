@@ -1,6 +1,18 @@
 # Creating Commits
 
-Commit only on explicit request. Before commit: `git status`; exclude unrelated user changes.
+Commit when the user explicitly requests it or when completing the default branch-review-merge workflow required by `AGENTS.md`. Before commit: `git status`; exclude unrelated user changes.
+
+## Default Branch Workflow
+
+Unless the user explicitly requests a different workflow:
+
+1. Identify the local target branch and create a `codex/` topic branch from it.
+2. Implement and run the affected module's tests, lint, and format checks on the topic branch.
+3. Commit the complete change on the topic branch using the format below.
+4. Run the `$code-review` skill with the target branch as the fixed point. Keep its Standards and Spec results separate.
+5. Fix every blocking finding, commit the fixes, and repeat the affected review axis.
+6. Merge the reviewed topic branch into the local target branch only after both axes pass.
+7. Do not create a PR or push unless the user explicitly requests that separate action. Before an allowed push, verify that `origin` is `xuchen-cloud/penpot`, verify the branch list and clean worktrees, and use an explicit refspec. Never force-push or change a remote URL.
 
 Do not guess or hallucinate git author information (Name or Email). Never include the
 `--author` flag in git commands unless specifically instructed by the user for a unique
