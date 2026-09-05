@@ -11,6 +11,9 @@ on:
     paths:
       - ".github/workflows/tests-desktop.yml"
       - "desktop/**"
+      - "plugins/apps/web-to-penpot-plugin/**"
+      - "plugins/package.json"
+      - "plugins/pnpm-lock.yaml"
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
 
@@ -27,6 +30,9 @@ on:
     paths:
       - ".github/workflows/tests-desktop.yml"
       - "desktop/**"
+      - "plugins/apps/web-to-penpot-plugin/**"
+      - "plugins/package.json"
+      - "plugins/pnpm-lock.yaml"
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
 
@@ -53,6 +59,24 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.0.0
+
+      - name: Install Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: plugins/pnpm-lock.yaml
+
+      - name: Install plugin dependencies
+        run: pnpm --dir plugins install --frozen-lockfile
+
+      - name: Prepare bundled plugins
+        run: pnpm --dir desktop prepare:web-to-penpot
 
       - name: Check runner architecture
         run: |

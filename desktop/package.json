@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "tauri dev",
+    "prebuild": "node scripts/prepare-web-to-penpot.mjs",
     "build": "tauri build",
+    "prepare:web-to-penpot": "node scripts/prepare-web-to-penpot.mjs",
     "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml",
     "check:rust": "cargo check --manifest-path src-tauri/Cargo.toml",
     "fmt:rust": "cargo fmt --manifest-path src-tauri/Cargo.toml -- --check"
