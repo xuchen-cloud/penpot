@@ -1,22 +1,10 @@
 name: "Commit Message Check"
 
 on:
-  pull_request:
-    types:
-      - opened
-      - edited
-      - reopened
-      - synchronize
-      - ready_for_review
-  push:
-    branches:
-      - main
-      - develop
-      - staging
+  workflow_dispatch:
 
 jobs:
   check-commit-message:
-    if: ${{ !github.event.pull_request.draft }}
     name: Commit policy
     runs-on: ubuntu-latest
     steps:
@@ -25,16 +13,5 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Check pull request commits
-        if: ${{ github.event_name == 'pull_request' }}
-        run: ./scripts/check-commit --range "${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
-
-      - name: Check pull request title
-        if: ${{ github.event_name == 'pull_request' }}
-        env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
-        run: ./scripts/check-commit --title "$PR_TITLE"
-
-      - name: Check pushed commits
-        if: ${{ github.event_name == 'push' }}
-        run: ./scripts/check-commit --range "${{ github.event.before }}..${{ github.sha }}"
+      - name: Check selected commit
+        run: ./scripts/check-commit --range "${{ github.sha }}^..${{ github.sha }}"

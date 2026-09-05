@@ -79,7 +79,7 @@ cycles.
 ### What NOT to Include
 
 - ❌ List of files changed (visible in diff)
-- ❌ Testing steps (CI handles this)
+- ❌ Long testing narratives; list the local commands and results in Evidence
 - ❌ Screenshots unless UI-visible
 - ❌ Migration notes unless breaking changes
 - ❌ Regression fixes introduced during the PR (they're part of the development process, not the feature)
@@ -89,7 +89,7 @@ cycles.
 - Follow `mem:workflow/creating-commits` for commits
 - Run the focused tests/lints appropriate to touched modules.
 - Complete the structured Spec, Standards, and Risk review.
-- Wait for every required GitHub check, including `Commit policy` and `Desktop CI`.
+- Run the relevant checks locally, including `scripts/check-commit` for the complete PR commit range, and record the commands and results in Evidence. GitHub CI does not run automatically.
 - Do not force-push during review unless the maintainer workflow explicitly asks for it.
 - When the user says the code is already pushed, trust that — do not verify remote branch existence via `git ls-remote` or `git fetch`.
 
@@ -116,6 +116,6 @@ rm -f /tmp/pr-body.md
 
 ## Merge
 
-- Use GitHub squash merge into `develop` after approval and required checks.
+- Use GitHub squash merge into `develop` after approval and recorded local checks.
 - Never merge the topic branch into local `develop` during normal work.
 - GitHub repository settings delete the remote topic branch after merge.

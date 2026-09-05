@@ -19,12 +19,7 @@ const result =
   process.platform === 'win32'
     ? spawnSync(
         process.env.ComSpec ?? 'cmd.exe',
-        [
-          '/d',
-          '/s',
-          '/c',
-          `pnpm.cmd --dir "${pluginsRoot}" --filter web-to-penpot-plugin copy:offline -- "${target}"`,
-        ],
+        ['/d', '/c', 'pnpm.cmd', ...pnpmArgs],
         { stdio: 'inherit' },
       )
     : spawnSync('pnpm', pnpmArgs, { stdio: 'inherit' });

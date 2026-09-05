@@ -12,7 +12,7 @@ Unless the user explicitly requests a different workflow:
 4. Verify that `origin` is `xuchen-cloud/penpot`, verify the intended branch and clean worktrees, and push the topic branch with an explicit refspec. Skip the push only when the user explicitly says not to push.
 5. Open or update a PR from the topic branch into `develop`; PR creation is a standard completion step, not a separate opt-in.
 6. Review the PR once with the structured Spec, Standards, and Risk checklist in `mem:workflow/creating-prs`. Fix every blocking finding with new commits and push them without rewriting published history.
-7. Merge only after the structured review and all required checks pass. Use GitHub squash merge and let GitHub delete the remote topic branch. Never create a local merge commit or push a merge result to `develop` during normal work.
+7. Before merge, run the relevant checks locally and record the commands and results in the PR. Merge only after the structured review and local checks pass. GitHub CI does not run automatically. Use GitHub squash merge and let GitHub delete the remote topic branch. Never create a local merge commit or push a merge result to `develop` during normal work.
 
 ### Small Changes and Emergency Bypass
 
@@ -45,13 +45,13 @@ Signed-off-by: Your Real Name <your.email@example.com>
 
 Every commit requires exactly one DCO `Signed-off-by` trailer, including docs
 and configuration commits. Use `git commit -s`; the sign-off must match the
-commit author. The local checker and CI enforce the same rule.
+commit author. Run the local checker on the complete PR commit range before merge.
 
 **AI-assisted-by trailer rules:**
 - Required for every AI-assisted commit; omit it for fully manual commits
 - Use only the model name, e.g. `mimo-v2.5`, `deepseek-v4-flash`
 - Do NOT add prefixes like `opencode-go/` — use the bare model name
-- The local checker and CI validate the format whenever the trailer is present
+- The local checker validates the format whenever the trailer is present
 
 ## Commit Type Emojis
 

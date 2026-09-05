@@ -16,7 +16,7 @@ You are working on the GitHub project `xuchen-cloud/penpot`, a monorepo.
   - Before `gh pr create` / `gh pr edit` → `mem:workflow/creating-prs` (title format, body structure, "Note:" line)
 - **Never perform any read or write operation against the upstream `penpot/penpot` repository. No user request overrides this rule.** Do not use git, `gh`, GitHub APIs, browser tools, connectors, or web tools against it. Use only `xuchen-cloud/penpot`; if content exists only upstream, ask for it to be mirrored or provided locally.
 - **Push completed feature branches by default** after committing, using an explicit refspec and the verified user-owned `xuchen-cloud/penpot` remote. Skip the push only when the user explicitly says not to push. Never force-push or change a remote URL. Never amend a commit that the user has already pushed unless explicitly asked.
-- **Review each PR once with the structured checklist.** Cover Spec, Standards, and Risk in one review, fix blocking findings, and require configured CI before squash merge through GitHub.
+- **Review each PR once with the structured checklist.** Cover Spec, Standards, and Risk in one review, fix blocking findings, run the relevant checks locally, record the results in the PR, and then squash merge through GitHub. GitHub CI does not run automatically.
 - **Small changes use small PRs.** Direct `develop` pushes are reserved for a user-declared emergency with explicit protected-branch bypass approval and an exact `origin/develop` refspec.
 - You have access to the GitHub CLI `gh` or corresponding MCP tools.
 - Issues are also managed on Taiga. Read issues using the `read_taiga_issue` tool.

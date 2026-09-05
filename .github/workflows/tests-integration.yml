@@ -30,36 +30,12 @@ on:
         required: true
         default: '2'
 
-  pull_request:
-    paths:
-      - 'frontend/**'
-      - 'common/**'
-      - 'render-wasm/**'
-      - '.github/workflows/tests-integration.yml'
-
-    types:
-      - opened
-      - synchronize
-      - ready_for_review
-
-  push:
-    branches:
-      - develop
-      - staging
-
-    paths:
-      - 'frontend/**'
-      - 'common/**'
-      - 'render-wasm/**'
-      - '.github/workflows/tests-integration.yml'
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || inputs.gh_ref || github.ref }}
   cancel-in-progress: true
 
 jobs:
   build-integration:
-    if: ${{ !github.event.pull_request.draft }}
     name: "Build Integration Bundle"
     runs-on: penpot-extended-runner
     timeout-minutes: 30
@@ -73,8 +49,6 @@ jobs:
       bundle_key: ${{ steps.vars.outputs.bundle_key }}
 
     steps:
-      # An empty `ref` makes checkout fall back to its default (the PR merge
-      # ref on pull_request, the pushed ref on push).
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
@@ -99,7 +73,6 @@ jobs:
           path: frontend/resources/public
 
   test-integration:
-    if: ${{ !github.event.pull_request.draft }}
     name: "Integration Tests (${{ matrix.shard }})"
     runs-on: penpot-extended-runner
     timeout-minutes: 40
@@ -178,7 +151,7 @@ jobs:
           retention-days: 3
 
   merge-reports:
-    if: ${{ always() && !github.event.pull_request.draft && needs.test-integration.result != 'skipped' }}
+    if: ${{ always() && needs.test-integration.result != 'skipped' }}
     name: "Merge Integration Reports"
     runs-on: penpot-extended-runner
     timeout-minutes: 15

@@ -47,10 +47,11 @@
   changes.** The normal path is a `codex/` topic branch, focused checks, a
   signed commit, a push to the verified remote, and a PR into `develop`. Review
   the PR once with the structured Spec, Standards, and Risk checklist in
-  `mem:workflow/creating-prs`; fix every blocking finding and wait for required
-  checks. Merge through GitHub with squash merge. Do not create a local merge
-  commit or push a merge result to `develop`. GitHub deletes the remote topic
-  branch after merge.
+  `mem:workflow/creating-prs`; fix every blocking finding and run the relevant
+  checks locally before merge. Record those results in the PR. GitHub CI does
+  not run automatically. Merge through GitHub with squash merge. Do not create
+  a local merge commit or push a merge result to `develop`. GitHub deletes the
+  remote topic branch after merge.
 
 ## CRITICAL: Read module memories BEFORE writing any code
 

@@ -120,8 +120,8 @@ for more concrete information.
   force-push during review, as it breaks comment threads.
 - Complete the PR template's single structured Spec, Standards, and Risk
   review. Any blocking item stops the merge.
-- PRs require a completed structured review and all required checks before
-  merge.
+- PRs require a completed structured review and recorded local checks before
+  merge. GitHub test workflows do not run automatically.
 - We use **squash-merge**. The PR title becomes the final
   commit message, so follow the [title format](#title-format) above.
 - GitHub deletes the topic branch after merge. Do not merge locally and push
@@ -249,7 +249,8 @@ By submitting code you agree to and can certify the following:
 
 Every commit, including documentation and configuration changes, must contain
 exactly one sign-off line at the end of the commit body. Add it automatically
-with `git commit -s`. The local checker and CI enforce this rule.
+with `git commit -s`. Run the local checker before merge; GitHub does not run
+this check automatically.
 
 ```
 Signed-off-by: Your Real Name <your.email@example.com>

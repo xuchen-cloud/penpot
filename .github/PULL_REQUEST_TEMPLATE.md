@@ -40,8 +40,7 @@
 
 ## Merge gate
 
-- [ ] `Commit policy` passes.
-- [ ] `Desktop CI` passes.
-- [ ] All other required checks pass.
+- [ ] The PR commit range passes `scripts/check-commit` locally.
+- [ ] Relevant module checks pass locally and are recorded above.
 - [ ] The structured review is complete with no blocking item.
 - [ ] Use squash merge; GitHub will delete the topic branch.

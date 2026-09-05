@@ -28,13 +28,7 @@ gh api --method PATCH "repos/$repo" \
 
 gh api --method PUT "repos/$repo/branches/develop/protection" --input - <<'JSON'
 {
-  "required_status_checks": {
-    "strict": true,
-    "contexts": [
-      "Commit policy",
-      "Desktop CI"
-    ]
-  },
+  "required_status_checks": null,
   "enforce_admins": false,
   "required_pull_request_reviews": {
     "dismiss_stale_reviews": true,

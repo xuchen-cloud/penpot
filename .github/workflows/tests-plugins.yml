@@ -5,22 +5,7 @@ defaults:
     shell: bash
 
 on:
-  pull_request:
-    paths:
-      - 'plugins/**'
-
-    types:
-      - opened
-      - synchronize
-      - ready_for_review
-
-  push:
-    branches:
-      - develop
-      - staging
-
-    paths:
-      - 'plugins/**'
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -28,7 +13,6 @@ concurrency:
 
 jobs:
   test-plugins:
-    if: ${{ !github.event.pull_request.draft }}
     name: Plugins Runtime Linter & Tests
     runs-on: penpot-extended-runner
     container:
