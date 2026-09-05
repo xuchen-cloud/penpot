@@ -106,7 +106,7 @@ def check_regex(message):
 
 
 def check_subject_length(message):
-    """Subject line must be ≤ 70 characters."""
+    """Subject line must be no longer than 70 characters."""
     first_line = message.split("\n")[0]
     if len(first_line) > 70:
         return False, (
@@ -200,7 +200,7 @@ def validate_message(message, expected_signoff=None):
     """Return named validation results for one commit message."""
     validators = [
         ("Regex pattern", check_regex),
-        ("Subject ≤ 70 chars", check_subject_length),
+        ("Subject <= 70 chars", check_subject_length),
         ("No trailing period in subject", check_subject_no_trailing_dot),
         ("Subject capitalized", check_subject_capitalized),
         ("Blank line after subject", check_body_blank_line),
@@ -214,7 +214,7 @@ def validate_title(title):
     """Return named validation results for a commit or PR title."""
     validators = [
         ("Regex pattern", check_regex),
-        ("Subject ≤ 70 chars", check_subject_length),
+        ("Subject <= 70 chars", check_subject_length),
         ("No trailing period in subject", check_subject_no_trailing_dot),
         ("Subject capitalized", check_subject_capitalized),
     ]

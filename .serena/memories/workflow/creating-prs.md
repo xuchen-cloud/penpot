@@ -14,7 +14,7 @@ This outputs `staging` or `develop` by walking the local commit graph (pure loca
 
 ## Metadata
 
-Always add the PR to the Main project (`--project "Main"`) unless the user explicitly requests a different project.
+Add the PR to the Main project (`--project "Main"`) when that project exists and is accessible. A missing project is not a blocker; create the PR without project metadata instead of retrying or creating a project.
 
 ## Title Format
 
@@ -107,8 +107,9 @@ gh pr create \
   --base "$TARGET" \
   --head <branch> \
   --title "<title>" \
-  --project "Main" \
   --body-file /tmp/pr-body.md
+
+# Add --project "Main" only after confirming that project is available.
 
 rm -f /tmp/pr-body.md
 ```
