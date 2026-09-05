@@ -3,7 +3,7 @@ name: "CI: Plugin API Test Suite"
 # Runs the Plugin API Test Suite (it exercises the real Penpot Plugin API, so it
 # needs a running frontend + the plugin runtime). Two jobs:
 #
-# - api-test-suite-mocked (pull_request / push): the per-PR gate. Serves the
+# - api-test-suite-mocked: the local pre-merge suite. Serves the
 #   prebuilt frontend bundle and intercepts every backend RPC with Playwright
 #   (MOCK_BACKEND=1). No backend / no login. Validates the frontend Plugin API
 #   binding + in-memory store; backend-result-dependent tests are skipped via the
@@ -26,31 +26,13 @@ on:
         required: false
         default: "https://localhost:3449"
 
-  pull_request:
-    paths:
-      - 'plugins/**'
-      - 'frontend/**'
-      - 'common/**'
-    types:
-      - opened
-      - synchronize
-      - ready_for_review
-
-  push:
-    branches:
-      - develop
-      - staging
-    paths:
-      - 'plugins/**'
-      - 'frontend/src/app/plugins/**'
-      - 'common/**'
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   api-test-suite-mocked:
+    # Automatic GitHub CI is disabled; run this suite locally before merge.
     if: ${{ github.event_name != 'workflow_dispatch' && !github.event.pull_request.draft }}
     name: "Run Plugin API Test Suite (mocked)"
     runs-on: penpot-extended-runner

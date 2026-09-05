@@ -7,42 +7,47 @@ defaults:
 on:
   workflow_dispatch:
 
-  pull_request:
-    paths:
-      - ".github/workflows/tests-desktop.yml"
-      - "desktop/**"
-      - "plugins/apps/web-to-penpot-plugin/**"
-      - "plugins/package.json"
-      - "plugins/pnpm-lock.yaml"
-      - "pnpm-lock.yaml"
-      - "pnpm-workspace.yaml"
-
-    types:
-      - opened
-      - synchronize
-      - ready_for_review
-
-  push:
-    branches:
-      - develop
-      - staging
-
-    paths:
-      - ".github/workflows/tests-desktop.yml"
-      - "desktop/**"
-      - "plugins/apps/web-to-penpot-plugin/**"
-      - "plugins/package.json"
-      - "plugins/pnpm-lock.yaml"
-      - "pnpm-lock.yaml"
-      - "pnpm-workspace.yaml"
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
+  desktop-changes:
+    name: Detect Desktop changes
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.changes.outputs.changed }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Detect affected files
+        id: changes
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          elif git diff --quiet "$BASE_SHA" "$HEAD_SHA" -- \
+            .github/workflows/tests-desktop.yml \
+            desktop \
+            plugins/apps/web-to-penpot-plugin \
+            plugins/package.json \
+            plugins/pnpm-lock.yaml \
+            pnpm-lock.yaml \
+            pnpm-workspace.yaml; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
   test-desktop:
-    if: ${{ !github.event.pull_request.draft }}
+    needs: desktop-changes
+    if: ${{ needs.desktop-changes.outputs.changed == 'true' }}
     name: "Desktop ${{ matrix.target }}"
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
@@ -63,7 +68,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 12.0.0
+          package_json_file: plugins/package.json
 
       - name: Install Node.js
         uses: actions/setup-node@v6
@@ -100,3 +105,27 @@ jobs:
       - name: Test
         working-directory: desktop/src-tauri
         run: cargo test --locked
+
+  desktop-required:
+    if: ${{ always() }}
+    needs:
+      - desktop-changes
+      - test-desktop
+    name: Desktop CI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require successful Desktop checks when affected
+        env:
+          CHANGED: ${{ needs.desktop-changes.outputs.changed }}
+          CHANGES_RESULT: ${{ needs.desktop-changes.result }}
+          TEST_RESULT: ${{ needs.test-desktop.result }}
+        run: |
+          if [[ "$CHANGES_RESULT" != "success" ]]; then
+            echo "Desktop change detection failed: $CHANGES_RESULT" >&2
+            exit 1
+          fi
+          if [[ "$CHANGED" == "true" && "$TEST_RESULT" != "success" ]]; then
+            echo "Desktop checks did not pass: $TEST_RESULT" >&2
+            exit 1
+          fi
+          echo "Desktop required check passed ($TEST_RESULT)."

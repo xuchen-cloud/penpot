@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo="xuchen-cloud/penpot"
+origin_url=$(git remote get-url origin)
+
+case "$origin_url" in
+  https://github.com/xuchen-cloud/penpot.git|git@github.com:xuchen-cloud/penpot.git)
+    ;;
+  *)
+    echo "Refusing to configure unexpected origin: $origin_url" >&2
+    exit 1
+    ;;
+esac
+
+command -v gh >/dev/null 2>&1 || {
+  echo "GitHub CLI (gh) is required." >&2
+  exit 1
+}
+
+gh auth status
+
+gh api --method PATCH "repos/$repo" \
+  -F allow_merge_commit=false \
+  -F allow_rebase_merge=false \
+  -F allow_squash_merge=true \
+  -F delete_branch_on_merge=true
+
+gh api --method PUT "repos/$repo/branches/develop/protection" --input - <<'JSON'
+{
+  "required_status_checks": null,
+  "enforce_admins": false,
+  "required_pull_request_reviews": {
+    "dismiss_stale_reviews": true,
+    "require_code_owner_reviews": false,
+    "required_approving_review_count": 0,
+    "require_last_push_approval": false
+  },
+  "restrictions": null,
+  "required_linear_history": true,
+  "allow_force_pushes": false,
+  "allow_deletions": false,
+  "block_creations": false,
+  "required_conversation_resolution": true,
+  "lock_branch": false,
+  "allow_fork_syncing": false
+}
+JSON
+
+echo "Configured protected develop workflow for $repo."

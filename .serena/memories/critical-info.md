@@ -10,14 +10,14 @@ You are working on the GitHub project `xuchen-cloud/penpot`, a monorepo.
 
 # Development workflow
 
-- Issue and PR creation is **on explicit request only**. For all repository changes, follow the default branch-review-merge workflow in `mem:workflow/creating-commits` unless the user explicitly requests a different workflow. Before any commit, issue, or PR action, read the relevant memory — don't infer format from prior examples:
+- Issue creation is **on explicit request only**. PR creation is the standard completion step for every repository change. Follow the PR workflow in `mem:workflow/creating-commits`. Before any commit, issue, or PR action, read the relevant memory — don't infer format from prior examples:
   - Before `git commit` → `mem:workflow/creating-commits` (subject format, body, `AI-assisted-by: model-name` trailer)
   - Before `gh issue create` → `mem:workflow/creating-issues` (title derivation, body template, labels, Issue Type)
   - Before `gh pr create` / `gh pr edit` → `mem:workflow/creating-prs` (title format, body structure, "Note:" line)
 - **Never perform any read or write operation against the upstream `penpot/penpot` repository. No user request overrides this rule.** Do not use git, `gh`, GitHub APIs, browser tools, connectors, or web tools against it. Use only `xuchen-cloud/penpot`; if content exists only upstream, ask for it to be mirrored or provided locally.
 - **Push completed feature branches by default** after committing, using an explicit refspec and the verified user-owned `xuchen-cloud/penpot` remote. Skip the push only when the user explicitly says not to push. Never force-push or change a remote URL. Never amend a commit that the user has already pushed unless explicitly asked.
-- **Run the dual-axis review only for a requested merge.** When the user asks to merge, review the remote feature branch against `develop` on separate Standards and Spec axes, fix blocking findings, then merge the feature branch into `develop`. A push alone does not require either review axis.
-- **Small-change shortcut requires explicit user approval.** If the change is assessed as small and low impact, the user may approve working directly on local `develop`, skipping the topic branch and dual-axis review, then committing and pushing to `origin/develop`. Keep focused checks and all remote and upstream safeguards.
+- **Review each PR once with the structured checklist.** Cover Spec, Standards, and Risk in one review, fix blocking findings, run the relevant checks locally, record the results in the PR, and then squash merge through GitHub. GitHub CI does not run automatically.
+- **Small changes use small PRs.** Direct `develop` pushes are reserved for a user-declared emergency with explicit protected-branch bypass approval and an exact `origin/develop` refspec.
 - You have access to the GitHub CLI `gh` or corresponding MCP tools.
 - Issues are also managed on Taiga. Read issues using the `read_taiga_issue` tool.
 - Before writing code, analyze the task in depth and describe your plan. If the task is complex, break it down into atomic steps.
