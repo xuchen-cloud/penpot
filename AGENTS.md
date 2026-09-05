@@ -43,13 +43,16 @@
   all repository changes unless the user explicitly asks for a different
   workflow.** The normal development path is a `codex/` topic branch, tests, a
   branch commit, and a default push of that feature branch to the verified
-  remote. Do not run the dual-axis review merely to push a feature branch.
+  remote. If the user explicitly says not to push, keep the branch local and
+  carry that opt-out through all later review and fix steps. Do not run the
+  dual-axis review merely to push a feature branch.
   When the user asks to merge, first run separate Standards and Spec reviews on
   the remote feature branch against `develop`, fix blocking findings, then
   merge that feature branch into `develop`. Tests do not replace either review
   axis. A user request to merge authorizes the local merge. Push the resulting
-  `develop` update only when the request also authorizes a remote update or
-  names the remote branch. For a small,
+  `develop` update only when the request explicitly authorizes that remote
+  destination/refspec, such as `origin/develop`; naming the source feature
+  branch does not authorize pushing the destination. For a small,
   low-impact change, the user may explicitly approve working directly on local
   `develop`, skipping the topic branch and both review axes, then pushing the
   resulting commit to `origin/develop`.
