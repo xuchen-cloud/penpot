@@ -6,6 +6,13 @@
   The user pushes from their own shell. If a push is required to surface the
   agent's work (e.g. force-push after an amend), state this in the response and
   wait for the user to push. Do not change the remote URL, do not switch SSH↔HTTPS.
+- **Never create or modify issues or pull requests in the upstream
+  `penpot/penpot` repository unless the user explicitly names that repository.**
+  The default write target for this workspace is the user's repository,
+  `xuchen-cloud/penpot`. Before every `gh issue create`, `gh issue edit`,
+  `gh pr create`, or `gh pr edit`, check `git remote get-url origin` and pass the
+  intended repository explicitly with `--repo`. Reading an upstream issue or PR
+  does not authorize writing to the upstream repository.
 - **Never amend a commit that has been pushed** unless the user explicitly asks.
   If the user pushes, treat that commit as final from the agent's side.
 - **Never pipe test output directly to filters** (`| head`, `| tail`, `| grep`, etc.).

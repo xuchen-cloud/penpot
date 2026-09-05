@@ -1,6 +1,6 @@
 # Creating Issues
 
-Create GitHub issues only on explicit request. Use `gh` CLI authenticated to `penpot/penpot`.
+Create GitHub issues only on explicit request. The default write target for this workspace is `xuchen-cloud/penpot`, never the upstream `penpot/penpot` repository. Before any write, verify `git remote get-url origin`, set `ISSUE_REPO=xuchen-cloud/penpot`, and pass `--repo "$ISSUE_REPO"` explicitly. Only write to `penpot/penpot` when the user explicitly names the upstream repository in the same request. Reading an upstream issue does not authorize an upstream write.
 
 ## Title Derivation
 
@@ -36,9 +36,9 @@ Command what should be built. Format: `[Imperative verb] [what] in/on [where]`.
 | Field | Rule |
 |-------|------|
 | **Labels** | `community contribution` (PRs from non-core) · skip workflow labels (`backport candidate`, `team-qa`) · do **not** add `bug` or `enhancement` labels (use Issue Type instead) |
-| **Milestone** | Use the current or next planned milestone. Fetch available milestones: `gh api repos/penpot/penpot/milestones --jq '.[].title'`. If unsure, omit. |
-| **Project** | Always `Main` (project number 8). Use `--project "Main"` flag. |
-| **Issue Type** | See Issue Type section below. Cannot be set via `gh issue create` — use GraphQL after creation. |
+| **Milestone** | Use the current or next planned milestone. Fetch available milestones: `gh api repos/$ISSUE_REPO/milestones --jq '.[].title'`. If unsure, omit. |
+| **Project** | Add the target owner's `Main` project only when it exists and the authenticated account can access it. Missing project access must not redirect the write to upstream. |
+| **Issue Type** | Issue types and their IDs belong to the target owner. Set one only when the target repository supports it; never reuse an upstream type ID for the fork. |
 
 ## Issue Body Template
 
@@ -89,29 +89,19 @@ cat > /tmp/issue-body.md << 'ISSUE_BODY'
 ISSUE_BODY
 
 gh issue create \
-  --repo penpot/penpot \
+  --repo "$ISSUE_REPO" \
   --title "<Derived title>" \
   --label "<label>" \
-  --project "Main" \
   --body-file /tmp/issue-body.md
 ```
 
-Output: `https://github.com/penpot/penpot/issues/<NUMBER>`
+Add `--project "Main"` only after verifying that `Main` belongs to the target owner and is visible to the current token. If project lookup fails, create the issue in `ISSUE_REPO`, report the missing metadata, and never retry against another repository.
+
+Output: `https://github.com/$ISSUE_REPO/issues/<NUMBER>`
 
 ## Setting the Issue Type
 
-`gh issue create` can't set Issue Type directly. Use GraphQL after creation.
-
-**Issue Type IDs for penpot/penpot:**
-
-| Type | ID |
-|------|----|
-| Bug | `IT_kwDOAcyBPM4AX5Nb` |
-| Enhancement | `IT_kwDOAcyBPM4B_IQN` |
-| Feature | `IT_kwDOAcyBPM4AX5Nf` |
-| Task | `IT_kwDOAcyBPM4AX5NY` |
-| Question | `IT_kwDOAcyBPM4B_IQj` |
-| Docs | `IT_kwDOAcyBPM4B_IQz` |
+`gh issue create` can't set Issue Type directly. Issue type IDs are owner-scoped. Resolve the ID from the same owner as `ISSUE_REPO` before using GraphQL. If the target is a personal repository or does not expose issue types, omit the type and report that fact. Never query or mutate `penpot/penpot` merely to set metadata on an issue created in `xuchen-cloud/penpot`.
 
 **Map:**
 - Bug report (steps to reproduce, expected vs. actual) → Bug
@@ -120,35 +110,12 @@ Output: `https://github.com/penpot/penpot/issues/<NUMBER>`
 - Docs → Docs
 - None of the above → Task
 
-**Set it:**
-```bash
-ISSUE_ID=$(gh api graphql -f query='
-query { repository(owner: "penpot", name: "penpot") {
-  issue(number: <NUMBER>) { id }
-}}' --jq '.data.repository.issue.id')
-
-gh api graphql -f query='
-mutation {
-  updateIssue(input: {
-    id: "'"$ISSUE_ID"'"
-    issueTypeId: "<TYPE_ID>"
-  }) {
-    issue { number issueType { name } }
-  }
-}'
-```
-
 ## Verification
 
 ```bash
-gh issue view <NUMBER> --repo penpot/penpot \
+gh issue view <NUMBER> --repo "$ISSUE_REPO" \
   --json title,labels,milestone,projectItems \
   --jq '{title, milestone: .milestone.title, labels: [.labels[].name], projects: [.projectItems[].title]}'
-
-gh api graphql -f query='
-query { repository(owner: "penpot", name: "penpot") {
-  issue(number: <NUMBER>) { issueType { name } }
-}}' --jq '.data.repository.issue.issueType.name'
 ```
 
 ## Cleanup
@@ -166,7 +133,7 @@ unit and the PR describes the implementation. The issue is the **WHAT**
 ### Fetch the PR
 
 ```bash
-gh pr view <PR_NUMBER> --repo penpot/penpot \
+gh pr view <PR_NUMBER> --repo "$ISSUE_REPO" \
   --json title,body,author,labels,baseRefName,mergedAt,state,milestone
 ```
 
@@ -189,7 +156,7 @@ Identify:
   ```
 
   If the PR has no milestone, create the issue without one.
-- **Project:** `Main`.
+- **Project:** add the target owner's `Main` project only when verified and accessible.
 - **Body:** extract the user-facing section (steps to reproduce or feature
   description). Omit internal details. Use the templates above.
 - **Issue Type:** use the mapping table above (also handles `:bug:` /
@@ -203,21 +170,20 @@ cat > /tmp/issue-body.md << 'ISSUE_BODY'
 ISSUE_BODY
 
 gh issue create \
-  --repo penpot/penpot \
+  --repo "$ISSUE_REPO" \
   --title "<Title>" \
   --label "community contribution" \  # only if PR has this label
   --milestone "<milestone>" \
-  --project "Main" \
   --body-file /tmp/issue-body.md
 ```
 
-Output: `https://github.com/penpot/penpot/issues/<NUMBER>`
+Output: `https://github.com/$ISSUE_REPO/issues/<NUMBER>`
 
 ### Assign to the PR author
 
 ```bash
-AUTHOR=$(gh pr view <PR_NUMBER> --repo penpot/penpot --json author --jq '.author.login')
-gh issue edit <ISSUE_NUMBER> --repo penpot/penpot --add-assignee "$AUTHOR"
+AUTHOR=$(gh pr view <PR_NUMBER> --repo "$ISSUE_REPO" --json author --jq '.author.login')
+gh issue edit <ISSUE_NUMBER> --repo "$ISSUE_REPO" --add-assignee "$AUTHOR"
 ```
 
 ### Set Issue Type and verify
@@ -231,12 +197,12 @@ the issue was sourced.
 Append `Closes #<ISSUE_NUMBER>` to the PR body:
 
 ```bash
-gh pr view <PR_NUMBER> --repo penpot/penpot --json body --jq '.body' > /tmp/pr-body.md
+gh pr view <PR_NUMBER> --repo "$ISSUE_REPO" --json body --jq '.body' > /tmp/pr-body.md
 printf "\n\nCloses #<ISSUE_NUMBER>\n" >> /tmp/pr-body.md
-gh pr edit <PR_NUMBER> --repo penpot/penpot --body-file /tmp/pr-body.md
+gh pr edit <PR_NUMBER> --repo "$ISSUE_REPO" --body-file /tmp/pr-body.md
 
 # Verify
-gh pr view <PR_NUMBER> --repo penpot/penpot --json body \
+gh pr view <PR_NUMBER> --repo "$ISSUE_REPO" --json body \
   --jq '.body | test("Closes #<ISSUE_NUMBER>")'
 ```
 
@@ -301,11 +267,10 @@ cat > /tmp/issue-body.md << 'ISSUE_BODY'
 ISSUE_BODY
 
 gh issue create \
-  --repo penpot/penpot \
+  --repo "$ISSUE_REPO" \
   --title "<Title>" \
   --label "community contribution" \  # only if applicable
   --milestone "<milestone>" \        # only if provided
-  --project "Main" \
   --body-file /tmp/issue-body.md
 ```
 
@@ -328,7 +293,7 @@ the body (e.g. `[PENPOT FEEDBACK]: ...`, `feature: ...`).
 ### Fetch the issue
 
 ```bash
-gh issue view <NUMBER> --repo penpot/penpot --json title,body
+gh issue view <NUMBER> --repo "$ISSUE_REPO" --json title,body
 ```
 
 ### Derive a new title
@@ -339,13 +304,13 @@ Read the body (not the current title) and apply the title rules in the
 ### Apply the new title
 
 ```bash
-gh issue edit <NUMBER> --repo penpot/penpot --title "<NEW TITLE>"
+gh issue edit <NUMBER> --repo "$ISSUE_REPO" --title "<NEW TITLE>"
 ```
 
 ### Confirm
 
 ```bash
-gh issue view <NUMBER> --repo penpot/penpot --json title
+gh issue view <NUMBER> --repo "$ISSUE_REPO" --json title
 ```
 
 ## See Also
