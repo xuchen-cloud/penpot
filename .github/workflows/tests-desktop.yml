@@ -86,10 +86,9 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Install pnpm
-        uses: pnpm/setup@v6
+        uses: pnpm/action-setup@v4
         with:
-          package-json-file: plugins/package.json
-          install: false
+          package_json_file: plugins/package.json
 
       - name: Install Node.js
         uses: actions/setup-node@v6

@@ -27,6 +27,8 @@ The GitHub repository must keep these settings:
 - Require branches to be up to date before merging.
 - Block force pushes and branch deletion.
 - Allow repository administrators to bypass only for a declared emergency.
+- Use the built-in `GITHUB_TOKEN` for triage labels; do not depend on an
+  upstream organization GitHub App or project board.
 
 Run `scripts/configure-repository` with an authenticated GitHub CLI session to
 apply these settings. The script refuses any origin other than
