@@ -2,12 +2,12 @@
 
 ## HARD RULES (always apply — no exceptions)
 
-- **Do not `git push` unless the user explicitly requests a push in the current
-  task.** An explicit request authorizes only a normal push of the in-scope
-  branches to the verified user-owned remote, `xuchen-cloud/penpot`. Before an
-  allowed push, run `git remote get-url origin`, confirm the owner and repository,
-  confirm the intended branches and clean worktrees, and use an explicit remote
-  and refspec. Never force-push or modify any remote URL.
+- **After completing development on a feature branch, push it to the verified
+  user-owned remote by default.** Skip the push only when the user explicitly
+  says not to push. Before every allowed push, run `git remote get-url origin`,
+  confirm the owner and repository, confirm the intended branch and clean
+  worktrees, and use an explicit remote and refspec. Never force-push or modify
+  any remote URL.
 - **Never perform any operation against the upstream `penpot/penpot`
   repository. No exceptions.** Do not fetch, pull, push, clone, list refs, open
   or search its issues, pull requests, advisories, releases, commits, or files,
@@ -35,10 +35,14 @@
   is the source of truth.
 - **Use the branch-review-merge workflow in `mem:workflow/creating-commits` for
   all repository changes unless the user explicitly asks for a different
-  workflow.** The required path is a `codex/` topic branch, tests, a branch
-  commit, separate Standards and Spec review axes, fixes for blocking findings,
-  and a local merge into the target branch. Tests do not replace either review
-  axis. Creating a PR and pushing each still require an explicit request.
+  workflow.** The normal development path is a `codex/` topic branch, tests, a
+  branch commit, and a default push of that feature branch to the verified
+  remote. Do not run the dual-axis review merely to push a feature branch.
+  When the user asks to merge, first run separate Standards and Spec reviews on
+  the remote feature branch against `develop`, fix blocking findings, then
+  merge that feature branch into `develop`. Tests do not replace either review
+  axis. A user request to merge authorizes the corresponding merge and its
+  remote update unless the user limits it to a local merge.
 
 ## CRITICAL: Read module memories BEFORE writing any code
 

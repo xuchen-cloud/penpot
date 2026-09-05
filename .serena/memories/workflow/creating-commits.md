@@ -9,10 +9,10 @@ Unless the user explicitly requests a different workflow:
 1. Identify the local target branch and create a `codex/` topic branch from it.
 2. Implement and run the affected module's tests, lint, and format checks on the topic branch.
 3. Commit the complete change on the topic branch using the format below.
-4. Run the `$code-review` skill with the target branch as the fixed point. Keep its Standards and Spec results separate.
-5. Fix every blocking finding, commit the fixes, and repeat the affected review axis.
-6. Merge the reviewed topic branch into the local target branch only after both axes pass.
-7. Do not create a PR or push unless the user explicitly requests that separate action. Before an allowed push, verify that `origin` is `xuchen-cloud/penpot`, verify the branch list and clean worktrees, and use an explicit refspec. Never force-push or change a remote URL.
+4. Verify that `origin` is `xuchen-cloud/penpot`, verify the intended branch and clean worktrees, and push the completed feature branch with an explicit refspec by default. Skip this push only when the user explicitly says not to push.
+5. Do not run the dual-axis review for a push alone. When the user asks to merge, review the remote feature branch against `develop` with separate Standards and Spec axes.
+6. Fix every blocking finding, commit the fixes, push the updated feature branch, and repeat the affected review axis.
+7. Merge the reviewed remote feature branch into `develop` only after both axes pass. A merge request authorizes the corresponding remote update unless the user explicitly limits the request to a local merge. Never force-push or change a remote URL.
 
 Do not guess or hallucinate git author information (Name or Email). Never include the
 `--author` flag in git commands unless specifically instructed by the user for a unique
