@@ -14,6 +14,20 @@ Unless the user explicitly requests a different workflow:
 6. Fix every blocking finding, commit the fixes, push the updated feature branch, and repeat the affected review axis.
 7. Merge the reviewed remote feature branch into `develop` only after both axes pass. A merge request authorizes the corresponding remote update unless the user explicitly limits the request to a local merge. Never force-push or change a remote URL.
 
+### Small-Change Shortcut
+
+For a change assessed as small and low impact, use the shortcut only after the
+user explicitly approves both that assessment and the shortcut:
+
+1. Work directly on local `develop`; do not create a topic branch.
+2. Run the relevant focused tests, lint, and format checks.
+3. Commit using the format below; do not run the dual-axis review.
+4. Verify `origin` is `xuchen-cloud/penpot`, confirm a clean worktree and the
+   intended ref, then push local `develop` to `origin/develop` explicitly.
+
+The shortcut never permits force-pushes, remote changes, or any operation
+against upstream `penpot/penpot`.
+
 Do not guess or hallucinate git author information (Name or Email). Never include the
 `--author` flag in git commands unless specifically instructed by the user for a unique
 case; assume the local environment is already configured. Allow git commit to

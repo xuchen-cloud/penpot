@@ -8,6 +8,12 @@
   confirm the owner and repository, confirm the intended branch and clean
   worktrees, and use an explicit remote and refspec. Never force-push or modify
   any remote URL.
+- **For a small, low-impact change, a user-approved shortcut is allowed.**
+  After explicitly confirming both the low-impact assessment and the shortcut,
+  work directly on local `develop`, skip the topic branch and dual-axis review,
+  commit the focused change, and push local `develop` to `origin/develop`.
+  This shortcut still requires the relevant focused checks and all remote and
+  upstream safeguards above.
 - **Never perform any operation against the upstream `penpot/penpot`
   repository. No exceptions.** Do not fetch, pull, push, clone, list refs, open
   or search its issues, pull requests, advisories, releases, commits, or files,
@@ -42,7 +48,10 @@
   the remote feature branch against `develop`, fix blocking findings, then
   merge that feature branch into `develop`. Tests do not replace either review
   axis. A user request to merge authorizes the corresponding merge and its
-  remote update unless the user limits it to a local merge.
+  remote update unless the user limits it to a local merge. For a small,
+  low-impact change, the user may explicitly approve working directly on local
+  `develop`, skipping the topic branch and both review axes, then pushing the
+  resulting commit to `origin/develop`.
 
 ## CRITICAL: Read module memories BEFORE writing any code
 
