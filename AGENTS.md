@@ -11,6 +11,13 @@
 - **Never pipe test output directly to filters** (`| head`, `| tail`, `| grep`, etc.).
   Always redirect to a file first: `command > /tmp/output.txt 2>&1`, then read/grep the file.
   This prevents hiding test failures. See `mem:testing` for details.
+- **Delegate long waits to a Luna sub-agent and poll them at low frequency.**
+  Before starting a long download, build, package, install, or end-to-end test,
+  estimate its duration and state the expected first check time. Give the wait
+  and status checks to a Luna sub-agent. Check near the estimate, then back off
+  when there is no new information. Never busy-poll, and never start a duplicate
+  copy of the same long-running job. The primary agent should keep working on
+  independent tasks while Luna waits.
 - **Read the workflow memory BEFORE the corresponding action**:
   - Before `git commit` → `mem:workflow/creating-commits` (commit format, AI-assisted-by trailer)
   - Before `gh issue create` → `mem:workflow/creating-issues` (title derivation, body template, Issue Type)
@@ -145,3 +152,16 @@ precision while maintaining a strong focus on maintainability and performance.
 - `scripts/ci` — CI orchestration script for running lint, tests, and format checks across modules. See `scripts/ci --help`.
 - `scripts/gh.py` — Multi-purpose GitHub CLI helper. Subcommands: `issues` (list issues in a milestone), `prs` (fetch PR details), `advisories` (list/inspect security advisories). See `python3 scripts/gh.py --help`.
 
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in this repository's GitHub Issues. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Triage uses the five default labels: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, and `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Domain docs use a multi-context layout focused on local deployment, localization, and project-specific extensions; the upstream Penpot core remains the baseline. See `docs/agents/domain.md`.
