@@ -1,13 +1,7 @@
-name: 'Commit Message Check'
+name: "Commit Message Check"
+
 on:
   pull_request:
-    types:
-      - opened
-      - edited
-      - reopened
-      - synchronize
-      - ready_for_review
-  pull_request_target:
     types:
       - opened
       - edited
@@ -23,31 +17,24 @@ on:
 jobs:
   check-commit-message:
     if: ${{ !github.event.pull_request.draft }}
-    name: Check Commit Message
+    name: Commit policy
     runs-on: ubuntu-latest
     steps:
-      - name: Check Commit Type
-        uses: gsactions/commit-message-checker@v2
+      - name: Checkout repository
+        uses: actions/checkout@v6
         with:
-          pattern: '^(((:(lipstick|globe_with_meridians|wrench|books|arrow_up|arrow_down|zap|ambulance|construction|boom|fire|whale|bug|sparkles|paperclip|tada|recycle|rewind|construction_worker):)\s[A-Z].*[^.])|(Merge|Revert|Reapply).+[^.])$'
-          flags: 'gm'
-          error: 'Commit should match CONTRIBUTING.md guideline'
-          checkAllCommitMessages: 'true' # optional: this checks all commits associated with a pull request
-          accessToken: ${{ secrets.GITHUB_TOKEN }} # github access token is only required if checkAllCommitMessages is true
+          fetch-depth: 0
 
-      # - name: Check Line Length
-      #   uses: gsactions/commit-message-checker@v2
-      #   with:
-      #     pattern: '^[^#].{74}'
-      #     error: 'The maximum line length of 74 characters is exceeded.'
-      #     excludeDescription: 'true' # optional: this excludes the description body of a pull request
-      #     excludeTitle: 'true' # optional: this excludes the title of a pull request
-      #     checkAllCommitMessages: 'true' # optional: this checks all commits associated with a pull request
-      #     accessToken: ${{ secrets.GITHUB_TOKEN }} # github access token is only required if checkAllCommitMessages is ue
-      # - name: Check for Resolves / Fixes
-      #   uses: gsactions/commit-message-checker@v2
-      #   with:
-      #     pattern: '^.+(Resolves|Fixes): \#[0-9]+$'
-      #     error: 'You need at least one "Resolves|Fixes: #<issue number>" line.'
+      - name: Check pull request commits
+        if: ${{ github.event_name == 'pull_request' }}
+        run: ./scripts/check-commit --range "${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
 
+      - name: Check pull request title
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: ./scripts/check-commit --title "$PR_TITLE"
 
+      - name: Check pushed commits
+        if: ${{ github.event_name == 'push' }}
+        run: ./scripts/check-commit --range "${{ github.event.before }}..${{ github.sha }}"

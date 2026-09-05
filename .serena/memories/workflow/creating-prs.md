@@ -1,6 +1,6 @@
 # Creating Pull Requests
 
-PR only on explicit request. Every PR read and write must target `xuchen-cloud/penpot`; never access upstream `penpot/penpot`. Branch: issue/feature-specific; fallback `<type>/<short-description>` (`fix/...`, `feat/...`, `refactor/...`, `docs/...`, `chore/...`, `perf/...`).
+PR creation is the standard completion step for every repository change. Every PR read and write must target `xuchen-cloud/penpot`; never access upstream `penpot/penpot`. Use a `codex/<short-description>` topic branch.
 
 ## Target Branch
 
@@ -55,6 +55,19 @@ PR descriptions follow this structure:
 
 The "Note:" line is required at the top. Adjust if this is a manual (non-AI) PR.
 
+## Structured Review
+
+Perform one review before merge and record the result in the PR. The review
+must cover all three groups:
+
+- **Spec:** the change matches the request and acceptance criteria; user-visible behavior and edge cases are covered.
+- **Standards:** the diff is focused and maintainable; relevant tests, lint, format, docs, and module rules are satisfied.
+- **Risk:** security, privacy, data migration, compatibility, performance, rollback, and residual risks are addressed or marked not applicable.
+
+Any blocking item stops the merge. Fix it with a new commit, push the branch,
+and update the same review. Do not run separate Standards and Spec review
+cycles.
+
 ## Writing Principles
 
 - **Write for humans.** The diff shows what changed. The description explains why.
@@ -75,6 +88,8 @@ The "Note:" line is required at the top. Adjust if this is a manual (non-AI) PR.
 
 - Follow `mem:workflow/creating-commits` for commits
 - Run the focused tests/lints appropriate to touched modules.
+- Complete the structured Spec, Standards, and Risk review.
+- Wait for every required GitHub check, including `Commit policy` and `Desktop CI`.
 - Do not force-push during review unless the maintainer workflow explicitly asks for it.
 - When the user says the code is already pushed, trust that — do not verify remote branch existence via `git ls-remote` or `git fetch`.
 
@@ -97,3 +112,9 @@ gh pr create \
 
 rm -f /tmp/pr-body.md
 ```
+
+## Merge
+
+- Use GitHub squash merge into `develop` after approval and required checks.
+- Never merge the topic branch into local `develop` during normal work.
+- GitHub repository settings delete the remote topic branch after merge.

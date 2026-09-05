@@ -1,32 +1,28 @@
 # Creating Commits
 
-Commit when the user explicitly requests it or when completing the default branch-review-merge workflow required by `AGENTS.md`. Before commit: `git status`; exclude unrelated user changes.
+Commit when the user explicitly requests it or when completing the default PR workflow required by `AGENTS.md`. Before commit: `git status`; exclude unrelated user changes.
 
-## Default Branch Workflow
+## Default Pull Request Workflow
 
 Unless the user explicitly requests a different workflow:
 
-1. Identify the local target branch and create a `codex/` topic branch from it.
-2. Implement and run the affected module's tests, lint, and format checks on the topic branch.
-3. Commit the complete change on the topic branch using the format below.
-4. Verify that `origin` is `xuchen-cloud/penpot`, verify the intended branch and clean worktrees, and push the completed feature branch with an explicit refspec by default. Skip this push when the user explicitly says not to push, and carry that opt-out through every later review and fix step.
-5. Do not run the dual-axis review for a push alone. When the user asks to merge, review the remote feature branch against `develop` with separate Standards and Spec axes.
-6. Fix every blocking finding, commit the fixes, and push the updated feature branch only when the user has not opted out of pushes. Repeat the affected review axis.
-7. Merge the reviewed remote feature branch into `develop` only after both axes pass. A merge request authorizes the local merge; push the resulting `develop` update only when the request explicitly authorizes that remote destination/refspec, such as `origin/develop`. Naming the source feature branch does not authorize pushing the destination. Never force-push or change a remote URL.
+1. Start from an up-to-date local `develop` and create a `codex/` topic branch.
+2. Implement and run the affected module's tests, lint, and format checks.
+3. Commit the complete change using the format below.
+4. Verify that `origin` is `xuchen-cloud/penpot`, verify the intended branch and clean worktrees, and push the topic branch with an explicit refspec. Skip the push only when the user explicitly says not to push.
+5. Open or update a PR from the topic branch into `develop`; PR creation is a standard completion step, not a separate opt-in.
+6. Review the PR once with the structured Spec, Standards, and Risk checklist in `mem:workflow/creating-prs`. Fix every blocking finding with new commits and push them without rewriting published history.
+7. Merge only after the structured review and all required checks pass. Use GitHub squash merge and let GitHub delete the remote topic branch. Never create a local merge commit or push a merge result to `develop` during normal work.
 
-### Small-Change Shortcut
+### Small Changes and Emergency Bypass
 
-For a change assessed as small and low impact, use the shortcut only after the
-user explicitly approves both that assessment and the shortcut:
+Small and low-impact changes still use a focused topic branch and a lightweight
+PR. Keep the PR short and run only the relevant focused checks.
 
-1. Work directly on local `develop`; do not create a topic branch.
-2. Run the relevant focused tests, lint, and format checks.
-3. Commit using the format below; do not run the dual-axis review.
-4. Verify `origin` is `xuchen-cloud/penpot`, confirm a clean worktree and the
-   intended ref, then push local `develop` to `origin/develop` explicitly.
-
-The shortcut never permits force-pushes, remote changes, or any operation
-against upstream `penpot/penpot`.
+A direct `develop` push is allowed only when the user declares an emergency and
+explicitly approves both the protected-branch bypass and the exact
+`origin/develop` refspec. Run focused checks first when the incident permits,
+never force-push, and record why the bypass was needed after service is stable.
 
 Do not guess or hallucinate git author information (Name or Email). Never include the
 `--author` flag in git commands unless specifically instructed by the user for a unique
@@ -44,11 +40,18 @@ Wrap lines at 72 characters — git log and tooling
 render long lines poorly. Keep each line concise.
 
 AI-assisted-by: model-name
+Signed-off-by: Your Real Name <your.email@example.com>
 ```
 
+Every commit requires exactly one DCO `Signed-off-by` trailer, including docs
+and configuration commits. Use `git commit -s`; the sign-off must match the
+commit author. The local checker and CI enforce the same rule.
+
 **AI-assisted-by trailer rules:**
+- Required for every AI-assisted commit; omit it for fully manual commits
 - Use only the model name, e.g. `mimo-v2.5`, `deepseek-v4-flash`
 - Do NOT add prefixes like `opencode-go/` — use the bare model name
+- The local checker and CI validate the format whenever the trailer is present
 
 ## Commit Type Emojis
 

@@ -34,13 +34,13 @@ Center](https://help.penpot.app/).
 - **Language**: Penpot is written primarily in Clojure (backend), ClojureScript
   (frontend/exporter), and Rust (render-wasm). Familiarity with the Clojure
   ecosystem is expected for most contributions.
-- **Issue tracker**: We use [GitHub Issues](https://github.com/penpot/penpot/issues)
+- **Issue tracker**: We use [GitHub Issues](https://github.com/xuchen-cloud/penpot/issues)
   for public bugs and [Taiga](https://tree.taiga.io/project/penpot/) for
   internal project management. Changelog entries reference both.
 
 ## Reporting Bugs
 
-Report bugs via [GitHub Issues](https://github.com/penpot/penpot/issues).
+Report bugs via [GitHub Issues](https://github.com/xuchen-cloud/penpot/issues).
 Before filing, search existing issues to avoid duplicates.
 
 Include the following when possible:
@@ -51,7 +51,7 @@ Include the following when possible:
 
 For security bugs or issues better discussed in private, email
 `support@penpot.app` or report them on [Github Security
-Advisories](https://github.com/penpot/penpot/security/advisories)
+Advisories](https://github.com/xuchen-cloud/penpot/security/advisories)
 
 > **Note:** We do not have a formal bug bounty program. Security
 > contributions are recognized in the changelog.
@@ -61,9 +61,9 @@ Advisories](https://github.com/penpot/penpot/security/advisories)
 ### Workflow
 
 1. **Read the DCO** — see [Developer's Certificate of Origin](#developers-certificate-of-origin-dco)
-   below. All code patches must include a `Signed-off-by` line.
+   below. Every commit must include a `Signed-off-by` line.
 2. **Discuss before building** — open a [GitHub
-   Issue](https://github.com/penpot/penpot/issues) before starting work on
+   Issue](https://github.com/xuchen-cloud/penpot/issues) before starting work on
    a new feature or significant change. For planned features on the roadmap,
    reference the corresponding Taiga story. Do not expect your contribution
    to be accepted if you submit it without prior discussion — this applies
@@ -72,6 +72,10 @@ Advisories](https://github.com/penpot/penpot/security/advisories)
    filing an issue first so we can track it independently of your fix.
 4. **Format and lint** — run the checks described in
    [Formatting and Linting](#formatting-and-linting) before submitting.
+5. **Use a pull request** — all normal changes, including small changes, use a
+   topic branch and a PR into protected `develop`. Direct pushes to `develop`
+   are reserved for a declared emergency and require an approved protection
+   bypass.
 
 ### Format
 
@@ -114,9 +118,14 @@ for more concrete information.
   when urgent tasks come up.
 - Address review feedback by **pushing new commits** — do not
   force-push during review, as it breaks comment threads.
-- PRs require at least **one approval** before merge.
-- We use **squash-merge** by default. The PR title becomes the final
+- Complete the PR template's single structured Spec, Standards, and Risk
+  review. Any blocking item stops the merge.
+- PRs require a completed structured review and all required checks before
+  merge.
+- We use **squash-merge**. The PR title becomes the final
   commit message, so follow the [title format](#title-format) above.
+- GitHub deletes the topic branch after merge. Do not merge locally and push
+  the merge commit to `develop`.
 
 ### What we won't accept
 
@@ -176,6 +185,8 @@ Commit messages must follow this format:
 - Do not end the subject with a period
 - Keep the subject to **70 characters** or fewer
 - Separate the subject from the body with a **blank line**
+- Add `AI-assisted-by: <model-name>` for AI-assisted commits; use the bare
+  model name and omit the trailer for fully manual commits.
 
 ### Examples
 
@@ -236,8 +247,9 @@ By submitting code you agree to and can certify the following:
 
 ### Signed-off-by
 
-All code patches (**documentation is excluded**) must contain a sign-off line
-at the end of the commit body. Add it automatically with `git commit -s`.
+Every commit, including documentation and configuration changes, must contain
+exactly one sign-off line at the end of the commit body. Add it automatically
+with `git commit -s`. The local checker and CI enforce this rule.
 
 ```
 Signed-off-by: Your Real Name <your.email@example.com>
