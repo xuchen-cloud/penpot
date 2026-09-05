@@ -130,9 +130,16 @@
 (defonce pool (atom nil))
 (defonce pool-browser-id (atom 1))
 
+(defn launch-options
+  []
+  (let [opts #js {:args #js ["--allow-insecure-localhost" "--font-render-hinting=none"]}]
+    (when-let [executable (cf/get :browser-executable)]
+      (unchecked-set opts "executablePath" executable))
+    opts))
+
 (def browser-pool-factory
   (letfn [(create []
-            (p/let [opts    #js {:args #js ["--allow-insecure-localhost" "--font-render-hinting=none"]}
+            (p/let [opts    (launch-options)
                     browser (.launch pw/chromium opts)
                     id      (swap! pool-browser-id inc)]
               (l/info :origin "factory" :action "create" :browser-id id)

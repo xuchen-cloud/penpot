@@ -8,7 +8,11 @@ pub struct LoopbackPortReservation {
 
 impl LoopbackPortReservation {
     pub fn reserve() -> io::Result<Self> {
-        let listener = TcpListener::bind(SocketAddrV4::new(Ipv4Addr::LOCALHOST, 0))?;
+        Self::reserve_port(0)
+    }
+
+    pub fn reserve_port(port: u16) -> io::Result<Self> {
+        let listener = TcpListener::bind(SocketAddrV4::new(Ipv4Addr::LOCALHOST, port))?;
         Ok(Self { listener })
     }
 
@@ -21,6 +25,10 @@ impl LoopbackPortReservation {
             .local_addr()
             .expect("a bound loopback listener must have an address")
             .port()
+    }
+
+    pub fn into_listener(self) -> TcpListener {
+        self.listener
     }
 }
 
@@ -45,5 +53,14 @@ mod tests {
         assert!(TcpListener::bind((Ipv4Addr::LOCALHOST, port)).is_err());
         reservation.release();
         assert!(TcpListener::bind((Ipv4Addr::LOCALHOST, port)).is_ok());
+    }
+
+    #[test]
+    fn reserves_a_requested_public_port() {
+        let available = LoopbackPortReservation::reserve().unwrap().release();
+        let reservation = LoopbackPortReservation::reserve_port(available).unwrap();
+
+        assert_eq!(reservation.port().unwrap(), available);
+        assert!(LoopbackPortReservation::reserve_port(available).is_err());
     }
 }

@@ -12,14 +12,14 @@ use crate::error::{DesktopError, Result};
 
 const STOP_TIMEOUT: Duration = Duration::from_secs(10);
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct ProcessSpec {
     pub id: String,
     pub command: CommandSpec,
     pub graceful_shutdown: Option<CommandSpec>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct CommandSpec {
     pub executable: PathBuf,
     pub arguments: Vec<String>,
@@ -89,15 +89,21 @@ impl ProcessSupervisor {
         })?;
         let mut supervisor = Self::default();
         for spec in specs {
-            match spawn(spec, logs) {
-                Ok(process) => supervisor.processes.push(process),
-                Err(error) => {
-                    let _ = supervisor.stop_all().await;
-                    return Err(error);
-                }
+            if let Err(error) = supervisor.start(spec, logs) {
+                let _ = supervisor.stop_all().await;
+                return Err(error);
             }
         }
         Ok(supervisor)
+    }
+
+    pub fn start(&mut self, spec: &ProcessSpec, logs: &Path) -> Result<()> {
+        fs::create_dir_all(logs).map_err(|source| DesktopError::WriteFile {
+            path: logs.to_owned(),
+            source,
+        })?;
+        self.processes.push(spawn(spec, logs)?);
+        Ok(())
     }
 
     pub fn statuses(&mut self) -> Result<Vec<ProcessStatus>> {

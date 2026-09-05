@@ -7,6 +7,7 @@ use crate::error::{DesktopError, Result};
 pub struct InstancePaths {
     pub root: PathBuf,
     pub database: PathBuf,
+    pub cache: PathBuf,
     pub assets: PathBuf,
     pub config: PathBuf,
     pub logs: PathBuf,
@@ -21,6 +22,7 @@ impl InstancePaths {
         let root = root.into();
         Self {
             database: root.join("database"),
+            cache: root.join("cache"),
             assets: root.join("assets"),
             config: root.join("config"),
             logs: root.join("logs"),
@@ -43,10 +45,11 @@ impl InstancePaths {
         self.config.join("desktop.json")
     }
 
-    fn directories(&self) -> [&Path; 9] {
+    fn directories(&self) -> [&Path; 10] {
         [
             &self.root,
             &self.database,
+            &self.cache,
             &self.assets,
             &self.config,
             &self.logs,

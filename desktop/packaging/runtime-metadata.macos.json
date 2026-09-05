@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "target": "aarch64-apple-darwin",
+  "components": [
+    { "id": "postgres", "version": "15.19", "source": "https://formulae.brew.sh/formula/postgresql@15", "license": "PostgreSQL", "buildRecipe": "desktop/packaging/assemble-macos.mjs" },
+    { "id": "cache", "version": "9.1.2", "source": "https://formulae.brew.sh/formula/valkey", "license": "BSD-3-Clause", "buildRecipe": "desktop/packaging/assemble-macos.mjs" },
+    { "id": "media-processor", "version": "1.0.0", "source": "https://github.com/penpot/penpot", "license": "MPL-2.0", "buildRecipe": "media-processor/esbuild.config.mjs" },
+    { "id": "backend", "version": "2.17.0-desktop.1", "source": "https://github.com/penpot/penpot", "license": "MPL-2.0", "buildRecipe": "backend/build.clj" },
+    { "id": "exporter", "version": "1.0.0", "source": "https://github.com/penpot/penpot", "license": "MPL-2.0", "buildRecipe": "exporter/shadow-cljs.edn" }
+  ],
+  "sources": [
+    { "id": "postgresql", "version": "15.19", "source": "https://ftp.postgresql.org/pub/source/v15.19/postgresql-15.19.tar.bz2", "license": "PostgreSQL", "sha256": "e1a64a87a46b825b88c082e4518161a47aab53c45694964f8ba1df28f7859f89", "buildRecipe": "Homebrew postgresql@15 formula" },
+    { "id": "valkey", "version": "9.1.2", "source": "https://github.com/valkey-io/valkey/archive/refs/tags/9.1.2.tar.gz", "license": "BSD-3-Clause", "sha256": "19c23908e7d57e8d91ef85b41f5646307582f10f4f0fb999bbf89ed24ec9c983", "buildRecipe": "Homebrew valkey formula" },
+    { "id": "node", "version": "22.18.0", "source": "https://nodejs.org/dist/v22.18.0/node-v22.18.0-darwin-arm64.tar.gz", "license": "MIT", "sha256": "2c12913cba67af77ded8a399df3fd91c2e7f8628c7079da40bb9ff33bf00dfc0", "buildRecipe": "desktop/packaging/assemble-macos.mjs" },
+    { "id": "openjdk", "version": "26.0.2.1", "source": "https://github.com/openjdk/jdk26u/archive/refs/tags/jdk-26.0.2.1-ga.tar.gz", "license": "GPL-2.0-only WITH Classpath-exception-2.0", "sha256": "91dd5ddd93e156f00a12c28d9b74b5ee1704e9f12d323d412d158b12e91d56d0", "buildRecipe": "Homebrew openjdk formula" },
+    { "id": "chromium", "version": "151.0.7922.34", "source": "https://cdn.playwright.dev/builds/cft/151.0.7922.34/mac-arm64/chrome-mac-arm64.zip", "license": "BSD-3-Clause", "sha256": "01a23ef9501b2745e0c2944c2e583207e6f6132d8d91c3a87ff65b5079e438ef", "buildRecipe": "Playwright 1.62.1 browser revision 1234" },
+    { "id": "fontforge", "version": "20251009", "source": "https://github.com/fontforge/fontforge/releases/download/20251009/fontforge-20251009.tar.xz", "license": "GPL-3.0-or-later", "sha256": "69046500185a5581b58139dfad30c0b3d8128f00ebbfddc31f2fcf877e329e52", "buildRecipe": "Homebrew fontforge formula" },
+    { "id": "woff2", "version": "1.0.2", "source": "https://github.com/google/woff2/archive/refs/tags/v1.0.2.tar.gz", "license": "MIT", "sha256": "add272bb09e6384a4833ffca4896350fdb16e0ca22df68c0384773c67a175594", "buildRecipe": "Homebrew woff2 formula" },
+    { "id": "woff-tools", "version": "2026-09-05", "source": "https://github.com/wget/woff-tools/archive/refs/heads/master.tar.gz", "license": "MPL-1.1 OR GPL-2.0-or-later OR LGPL-2.1-or-later", "sha256": "306d2bd63b0e7c0d56b594f8ab96498e8acd254c250919c15023d3f13e533583", "buildRecipe": "make" },
+    { "id": "imagemagick", "version": "7.1.2-31", "source": "https://github.com/ImageMagick/ImageMagick/releases/download/7.1.2-31/ImageMagick-7.1.2-31.7z", "license": "ImageMagick", "sha256": "a050a1f6b632cf3a5b326fe6fb863790ce4d52d55fba9c6a7645b42599660e18", "buildRecipe": "Homebrew imagemagick formula" },
+    { "id": "potrace", "version": "1.16", "source": "https://potrace.sourceforge.net/download/1.16/potrace-1.16.tar.gz", "license": "GPL-2.0-or-later", "sha256": "be8248a17dedd6ccbaab2fcc45835bb0502d062e40fbded3bc56028ce5eb7acc", "buildRecipe": "Homebrew potrace formula" }
+  ]
+}

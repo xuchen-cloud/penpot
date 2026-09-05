@@ -49,6 +49,7 @@
    [:flags {:optional true} [::sm/set :keyword]]
    [:redis-uri {:optional true} :string]
    [:tempdir {:optional true} :string]
+   [:browser-executable {:optional true} :string]
    [:browser-pool-max {:optional true} ::sm/int]
    [:browser-pool-min {:optional true} ::sm/int]
    [:exporter-max-concurrent-jobs {:optional true} ::sm/int]

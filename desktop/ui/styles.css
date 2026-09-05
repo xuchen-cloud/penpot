@@ -88,9 +88,15 @@ h1 {
   background: #a1a1aa;
 }
 
-.indicator[data-phase="ready"] {
+.indicator[data-phase="ready"],
+.indicator[data-phase="running"] {
   background: #22c55e;
   box-shadow: 0 0 0 5px rgb(34 197 94 / 14%);
+}
+
+.indicator[data-phase="starting"] {
+  background: #f59e0b;
+  box-shadow: 0 0 0 5px rgb(245 158 11 / 14%);
 }
 
 .indicator[data-phase="error"],

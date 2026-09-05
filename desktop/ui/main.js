@@ -1,3 +1,5 @@
+import { runtimeAction } from "./status.js";
+
 const statusElement = document.querySelector("#status");
 const detailsElement = document.querySelector("#details");
 const indicatorElement = document.querySelector("#indicator");
@@ -20,9 +22,27 @@ function renderStatus(status) {
   initializeForm.hidden = status.phase !== "not_initialized";
 }
 
+function openPenpot(status) {
+  renderStatus(status);
+  const action = runtimeAction(status);
+  if (action?.publicUrl) {
+    window.location.replace(action.publicUrl);
+  }
+}
+
 async function refresh() {
   try {
-    renderStatus(await invoke("get_runtime_status"));
+    const status = await invoke("get_runtime_status");
+    renderStatus(status);
+    const action = runtimeAction(status);
+    if (action?.command) {
+      renderStatus({
+        phase: "starting",
+        title: "Starting Penpot",
+        detail: "Preparing the private database and local services…",
+      });
+      openPenpot(await invoke(action.command));
+    }
   } catch (error) {
     statusElement.textContent = "Desktop runtime unavailable";
     detailsElement.textContent = String(error);
@@ -34,7 +54,7 @@ initializeForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   initializeButton.disabled = true;
   try {
-    renderStatus(
+    openPenpot(
       await invoke("initialize_instance", {
         adminEmail: adminEmailInput.value,
       }),
