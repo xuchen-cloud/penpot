@@ -1,4 +1,4 @@
-You are working on the GitHub project `penpot/penpot`, a monorepo.
+You are working on the GitHub project `xuchen-cloud/penpot`, a monorepo.
 
 # Memory system
 
@@ -14,7 +14,8 @@ You are working on the GitHub project `penpot/penpot`, a monorepo.
   - Before `git commit` → `mem:workflow/creating-commits` (subject format, body, `AI-assisted-by: model-name` trailer)
   - Before `gh issue create` → `mem:workflow/creating-issues` (title derivation, body template, labels, Issue Type)
   - Before `gh pr create` / `gh pr edit` → `mem:workflow/creating-prs` (title format, body structure, "Note:" line)
-- **Do not `git push` unless the user explicitly requests a push in the current task.** An allowed push must use an explicit refspec and the verified user-owned `xuchen-cloud/penpot` remote. Never force-push, change a remote URL, or write to upstream `penpot/penpot`. Never amend a commit that the user has already pushed unless explicitly asked.
+- **Never perform any read or write operation against the upstream `penpot/penpot` repository. No user request overrides this rule.** Do not use git, `gh`, GitHub APIs, browser tools, connectors, or web tools against it. Use only `xuchen-cloud/penpot`; if content exists only upstream, ask for it to be mirrored or provided locally.
+- **Do not `git push` unless the user explicitly requests a push in the current task.** An allowed push must use an explicit refspec and the verified user-owned `xuchen-cloud/penpot` remote. Never force-push or change a remote URL. Never amend a commit that the user has already pushed unless explicitly asked.
 - You have access to the GitHub CLI `gh` or corresponding MCP tools.
 - Issues are also managed on Taiga. Read issues using the `read_taiga_issue` tool.
 - Before writing code, analyze the task in depth and describe your plan. If the task is complex, break it down into atomic steps.

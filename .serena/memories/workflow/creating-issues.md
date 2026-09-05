@@ -1,6 +1,6 @@
 # Creating Issues
 
-Create GitHub issues only on explicit request. The default write target for this workspace is `xuchen-cloud/penpot`, never the upstream `penpot/penpot` repository. Before any write, verify `git remote get-url origin`, set `ISSUE_REPO=xuchen-cloud/penpot`, and pass `--repo "$ISSUE_REPO"` explicitly. Only write to `penpot/penpot` when the user explicitly names the upstream repository in the same request. Reading an upstream issue does not authorize an upstream write.
+Create GitHub issues only on explicit request. Every issue read and write must target `xuchen-cloud/penpot`. Never access the upstream `penpot/penpot` repository, even when a user names it. Before any write, verify `git remote get-url origin`, set `ISSUE_REPO=xuchen-cloud/penpot`, and pass `--repo "$ISSUE_REPO"` explicitly. If the source exists only upstream, ask for it to be mirrored or provided locally.
 
 ## Title Derivation
 

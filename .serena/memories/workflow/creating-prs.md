@@ -1,6 +1,6 @@
 # Creating Pull Requests
 
-PR only on explicit request. Branch: issue/feature-specific; fallback `<type>/<short-description>` (`fix/...`, `feat/...`, `refactor/...`, `docs/...`, `chore/...`, `perf/...`).
+PR only on explicit request. Every PR read and write must target `xuchen-cloud/penpot`; never access upstream `penpot/penpot`. Branch: issue/feature-specific; fallback `<type>/<short-description>` (`fix/...`, `feat/...`, `refactor/...`, `docs/...`, `chore/...`, `perf/...`).
 
 ## Target Branch
 
@@ -88,7 +88,7 @@ PR_BODY
 TARGET=$(scripts/detect-target-branch)
 
 gh pr create \
-  --repo penpot/penpot \
+  --repo xuchen-cloud/penpot \
   --base "$TARGET" \
   --head <branch> \
   --title "<title>" \

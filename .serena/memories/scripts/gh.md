@@ -1,7 +1,10 @@
 # GitHub operations helper
 
-`scripts/gh.py` is a multi-purpose CLI for querying the penpot/penpot GitHub
+`scripts/gh.py` is a multi-purpose CLI for querying the xuchen-cloud/penpot GitHub
 repository via GraphQL and REST APIs through the authenticated `gh` CLI.
+
+The repository is fixed to `xuchen-cloud/penpot`. Never change it to or use this
+tool against the upstream `penpot/penpot` repository.
 
 ## When to use
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-gh.py — Multi-purpose CLI helper for penpot/penpot GitHub operations.
+gh.py — Multi-purpose CLI helper for xuchen-cloud/penpot GitHub operations.
 
 Uses GitHub GraphQL and REST APIs via the authenticated ``gh`` CLI.
 
@@ -41,8 +41,8 @@ import sys
 from typing import Any
 
 
-REPO = "penpot/penpot"
-OWNER = "penpot"
+REPO = "xuchen-cloud/penpot"
+OWNER = "xuchen-cloud"
 REPO_NAME = "penpot"
 
 
@@ -707,7 +707,7 @@ def cmd_advisories(args: argparse.Namespace) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Multi-purpose CLI helper for penpot/penpot GitHub operations"
+        description="Multi-purpose CLI helper for xuchen-cloud/penpot GitHub operations"
     )
     sub = parser.add_subparsers(dest="command", required=True, title="subcommands")
 

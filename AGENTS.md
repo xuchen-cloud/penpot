@@ -8,13 +8,13 @@
   allowed push, run `git remote get-url origin`, confirm the owner and repository,
   confirm the intended branches and clean worktrees, and use an explicit remote
   and refspec. Never force-push or modify any remote URL.
-- **Never create or modify issues or pull requests in the upstream
-  `penpot/penpot` repository unless the user explicitly names that repository.**
-  The default write target for this workspace is the user's repository,
-  `xuchen-cloud/penpot`. Before every `gh issue create`, `gh issue edit`,
-  `gh pr create`, or `gh pr edit`, check `git remote get-url origin` and pass the
-  intended repository explicitly with `--repo`. Reading an upstream issue or PR
-  does not authorize writing to the upstream repository.
+- **Never perform any operation against the upstream `penpot/penpot`
+  repository. No exceptions.** Do not fetch, pull, push, clone, list refs, open
+  or search its issues, pull requests, advisories, releases, commits, or files,
+  and do not call GitHub CLI, API, browser, connector, or web tools against it.
+  Use `xuchen-cloud/penpot` for every repository read and write. If the only
+  source is an upstream URL, stop and ask for the content to be copied into the
+  user's repository or provided locally.
 - **Never amend a commit that has been pushed** unless the user explicitly asks.
   If the user pushes, treat that commit as final from the agent's side.
 - **Never pipe test output directly to filters** (`| head`, `| tail`, `| grep`, etc.).
@@ -59,18 +59,21 @@ Skipping this step is the #1 cause of incorrect or incomplete work.
 ## Auto-triggers
 
 - **Security advisory URL pasted** — When the user pastes a URL matching
-  `github.com/penpot/penpot/security/advisories/GHSA-*`, extract the GHSA ID
+  `github.com/xuchen-cloud/penpot/security/advisories/GHSA-*`, extract the GHSA ID
   from the URL and run `python3 scripts/gh.py advisories <GHSA-ID>` to fetch
   full advisory details before proceeding.
-- **Issue or PR mentioned** — When the user mentions a penpot/penpot issue or
-  PR (URL like `github.com/penpot/penpot/issues/<n>` / `.../pull/<n>`, or a
+- **Issue or PR mentioned** — When the user mentions an xuchen-cloud/penpot issue or
+  PR (URL like `github.com/xuchen-cloud/penpot/issues/<n>` / `.../pull/<n>`, or a
   bare `#<n>` when context clearly refers to this repo), fetch details via CLI
   instead of WebFetch:
-  - Issue → `gh issue view <n> --repo penpot/penpot` (add `--comments` when
+  - Issue → `gh issue view <n> --repo xuchen-cloud/penpot` (add `--comments` when
     discussion context matters).
-  - Single PR → `gh pr view <n> --repo penpot/penpot`.
+  - Single PR → `gh pr view <n> --repo xuchen-cloud/penpot`.
   - Multiple PRs (list, file, or milestone) → `python3 scripts/gh.py prs ...`.
   Do this before proceeding. Only use WebFetch if the CLI fails.
+- **Upstream URL mentioned** — Never open or query a `github.com/penpot/penpot`
+  URL. Ask the user to mirror the issue, PR, advisory, release, commit, or file
+  into `xuchen-cloud/penpot`, or to provide its contents locally.
 
 ## Writing Rules
 

@@ -1,6 +1,6 @@
 # Issue tracker: GitHub
 
-Issues and PRDs for this repo live as GitHub issues. Use the `gh` CLI for all operations.
+Issues and PRDs for this repo live in `xuchen-cloud/penpot` GitHub Issues. Use the `gh` CLI with `--repo xuchen-cloud/penpot` for all operations. Never read from or write to the upstream `penpot/penpot` repository.
 
 ## Conventions
 
@@ -11,7 +11,7 @@ Issues and PRDs for this repo live as GitHub issues. Use the `gh` CLI for all op
 - Comment with `gh issue comment <number> --body "..."`.
 - Apply or remove labels with `gh issue edit`.
 - Close an issue with `gh issue close <number> --comment "..."`.
-- Infer the repository from `git remote -v`.
+- Verify that `git remote get-url origin` points to `xuchen-cloud/penpot`, then pass `--repo xuchen-cloud/penpot` explicitly.
 
 ## Pull requests as a triage surface
 
