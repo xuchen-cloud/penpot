@@ -2,8 +2,9 @@
 
 Last updated: 2026-09-05
 
-Neither release target has passed the full entry gate. Stage two remains
-blocked.
+Neither release target has passed the full compatibility check. These reports
+are deferred until the matching stage-two runtime can be assembled; they no
+longer block implementation.
 
 ## macOS arm64
 

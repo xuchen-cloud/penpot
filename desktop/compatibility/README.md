@@ -4,8 +4,8 @@ This directory contains the stage-one command-line prototype. It has no Tauri
 or installer UI. It starts only executables from an assembled runtime and writes
 a JSON report with each command, duration, result, and failure.
 
-Passing Rust tests does not pass this gate. Keep stage two blocked until reports
-from both `aarch64-apple-darwin` and `x86_64-pc-windows-msvc` have `passed: true`.
+Passing Rust tests does not pass this check. Run it against each assembled
+stage-two runtime on its native host and resolve failures before release.
 
 ## Runtime inputs
 

@@ -51,11 +51,12 @@
       "processId": "media-processor",
       "command": {
         "executable": "node/bin/node",
-        "arguments": ["{{runtime_root}}/media-processor/main.js"],
+        "arguments": ["{{runtime_root}}/media-processor/index.js"],
         "environment": {
           "PENPOT_MEDIA_PROCESSOR_HOST": "127.0.0.1",
           "PENPOT_MEDIA_PROCESSOR_PORT": "{{port.media}}",
           "PENPOT_MEDIA_PROCESSOR_SHARED_KEY": "desktop-compatibility-key",
+          "PATH": "{{runtime_root}}/tools/bin",
           "PENPOT_MEDIA_PROCESSOR_LOG_LEVEL": "info"
         }
       },
@@ -79,6 +80,7 @@
           "PENPOT_SECRET_KEY": "desktop-compatibility-secret-key",
           "PENPOT_MEDIA_PROCESSING_SERVICE_URI": "http://127.0.0.1:{{port.media}}",
           "PENPOT_MEDIA_PROCESSOR_SHARED_KEY": "desktop-compatibility-key",
+          "PENPOT_EXPORTER_SHARED_KEY": "desktop-compatibility-exporter-key",
           "PENPOT_OBJECTS_STORAGE_BACKEND": "fs",
           "PENPOT_OBJECTS_STORAGE_FS_DIRECTORY": "{{work_root}}/assets",
           "PENPOT_TELEMETRY_ENABLED": "false",
@@ -103,7 +105,7 @@
       "processId": "exporter",
       "command": {
         "executable": "node/bin/node",
-        "arguments": ["{{runtime_root}}/exporter/main.js"],
+        "arguments": ["{{runtime_root}}/exporter/app.js"],
         "environment": {
           "PENPOT_HTTP_SERVER_HOST": "127.0.0.1",
           "PENPOT_HTTP_SERVER_PORT": "{{port.exporter}}",

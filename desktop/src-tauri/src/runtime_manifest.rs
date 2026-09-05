@@ -29,6 +29,12 @@ pub struct RuntimeComponent {
     pub depends_on: Vec<String>,
 }
 
+impl RuntimeComponent {
+    pub fn files(&self) -> impl Iterator<Item = &PathBuf> {
+        std::iter::once(&self.executable).chain(&self.required_files)
+    }
+}
+
 impl RuntimeManifest {
     pub fn validate(&self) -> Result<()> {
         if self.schema_version != 1 {
@@ -48,8 +54,7 @@ impl RuntimeManifest {
             DesktopError::InvalidManifest(format!("target {target} is not defined"))
         })?;
         for component in &runtime.components {
-            for relative in std::iter::once(&component.executable).chain(&component.required_files)
-            {
+            for relative in component.files() {
                 let path = root.join(relative);
                 if !path.is_file() {
                     return Err(DesktopError::MissingRuntime(format!(

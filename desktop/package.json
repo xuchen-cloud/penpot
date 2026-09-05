@@ -5,8 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "tauri dev",
-    "build": "tauri build",
+    "build": "node packaging/package.mjs",
+    "build:sources": "node packaging/build-sources.mjs",
+    "assemble:macos": "node packaging/assemble-macos.mjs",
+    "prepare:macos": "node packaging/prepare-macos.mjs",
+    "package:macos": "node packaging/pipeline-macos.mjs",
+    "verify:runtime": "node packaging/verify.mjs",
     "build:compat": "cargo build --locked --manifest-path src-tauri/Cargo.toml --bin penpot-desktop-compat",
+    "build:runtime-lock": "cargo build --locked --manifest-path src-tauri/Cargo.toml --bin penpot-runtime-lock",
+    "test:node": "node --test packaging/*.test.mjs ui/*.test.mjs",
     "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml",
     "check:rust": "cargo check --manifest-path src-tauri/Cargo.toml",
     "fmt:rust": "cargo fmt --manifest-path src-tauri/Cargo.toml -- --check"

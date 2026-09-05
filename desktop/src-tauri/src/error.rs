@@ -32,6 +32,12 @@ pub enum DesktopError {
     #[error("runtime bundle is incomplete: {0}")]
     MissingRuntime(String),
 
+    #[error("runtime integrity check failed: {0}")]
+    RuntimeIntegrity(String),
+
+    #[error("credential store error: {0}")]
+    Credential(String),
+
     #[error("gateway error: {0}")]
     Gateway(String),
 

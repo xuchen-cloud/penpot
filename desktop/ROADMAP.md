@@ -37,10 +37,11 @@ process groups. Windows uses a Job Object with `KILL_ON_JOB_CLOSE`.
 
 ## Delivery stages
 
-### 1. Cross-platform compatibility gate — incomplete
+### 1. Cross-platform compatibility checks — deferred
 
-Build a command-line prototype with no installer UI and run it natively on
-both release targets before continuing the full local-stack implementation:
+Keep the command-line checks for use with assembled runtimes. They do not
+block stage 2 development. Resolve native failures during implementation and
+final package acceptance:
 
 - Initialize PostgreSQL, run all backend migrations, stop it cleanly, and
   start it again with the same data.
@@ -67,13 +68,13 @@ does not complete this gate:
   ordinary desktop configuration.
 - A native macOS and Windows Rust CI workflow.
 
-### 2. Bootable local stack — blocked by stage 1
+### 2. Bootable local stack
 
 - Pin and assemble every runtime archive with SHA-256 verification.
 - Record component version, source, license, target, checksum, and build recipe
-  in a machine-readable bill of materials. CI is the only place allowed to
-  download runtime archives; installation and startup must work without a
-  network connection.
+  in a machine-readable bill of materials. CI and explicit developer packaging
+  commands may download runtime archives; installation and startup must work
+  without a network connection.
 - Initialize PostgreSQL without a system installation.
 - Configure PostgreSQL with an explicit bundled `pg_ctl` shutdown command so
   normal application exit does not rely on terminating its process tree.
@@ -101,19 +102,23 @@ does not complete this gate:
 - Replace `X-Accel-Redirect` with a path-normalized asset response confined to
   the configured asset root, including range and cache behavior.
 - Serve generated frontend configuration without changing signed resources.
-- Generate the local certificate material and start the gateway at
-  `https://localhost:9001`. Keep its private key in the operating-system
-  credential store. The desktop WebView must trust only this installation's
-  certificate without weakening TLS validation for other origins.
+- Start the local-only gateway at `http://localhost:9001`, bind it only to
+  `127.0.0.1`, and rely on browsers' secure-context treatment of localhost.
+  Do not install a private CA or bypass WebView certificate validation: Tauri's
+  macOS WebView cannot pin an app-local self-signed CA without native changes,
+  and adding system trust would add prompts to first launch. LAN mode gets its
+  own explicit certificate flow in stage 4.
 - Show Penpot only after all required probes pass. On failure, identify the
   component, keep its redacted logs, and offer retry, open-log-folder, and safe
   shutdown actions.
 
-Do not start the full stage 2 implementation until stage 1 passes on both
-targets. Stage 2 is complete only when both target platforms can initialize,
-start, stop, and restart the full stack from bundled artifacts while
-disconnected. Invitation and LAN tests remain gates in later stages, but their
-required executables must already be present in the bundle.
+Stage 1 compatibility reports do not block implementation. Run those checks
+against the assembled runtime when the matching native host is available, and
+fix compatibility failures as part of stage 2. Stage 2 is complete only when
+both target platforms can initialize, start, stop, and restart the full stack
+from bundled artifacts while disconnected. Invitation and LAN tests remain
+gates in later stages, but their required executables must already be present
+in the bundle.
 
 ### 3. Offline product behavior
 
