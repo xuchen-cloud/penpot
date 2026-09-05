@@ -5,6 +5,8 @@ use axum::Json;
 use axum::body::Body;
 use axum::extract::State;
 use axum::http::{HeaderValue, Request, Response, StatusCode, header};
+use axum::middleware::{self, Next};
+use axum::response::Response as AxumResponse;
 use axum::routing::{any, get};
 use axum::{Router, http};
 use hyper_util::client::legacy::Client;
@@ -164,6 +166,7 @@ fn router_with_body_limit(config: GatewayConfig, body_limit: usize) -> Router {
         .route("/ws/notifications", any(proxy_backend))
         .fallback_service(frontend)
         .layer(RequestBodyLimitLayer::new(body_limit))
+        .layer(middleware::from_fn(plugin_response_headers))
         .layer(SetResponseHeaderLayer::if_not_present(
             header::X_CONTENT_TYPE_OPTIONS,
             HeaderValue::from_static("nosniff"),
@@ -172,11 +175,32 @@ fn router_with_body_limit(config: GatewayConfig, body_limit: usize) -> Router {
             header::REFERRER_POLICY,
             HeaderValue::from_static("no-referrer"),
         ))
-        .layer(SetResponseHeaderLayer::if_not_present(
-            http::header::X_FRAME_OPTIONS,
-            HeaderValue::from_static("DENY"),
-        ))
         .with_state(state)
+}
+
+async fn plugin_response_headers(request: axum::extract::Request, next: Next) -> AxumResponse {
+    let path = request.uri().path().to_owned();
+    let mut response = next.run(request).await;
+    let plugin_path = path.starts_with("/plugins/web-to-penpot/");
+    response.headers_mut().insert(
+        http::header::X_FRAME_OPTIONS,
+        HeaderValue::from_static(if plugin_path { "SAMEORIGIN" } else { "DENY" }),
+    );
+    let value = match path.as_str() {
+        "/plugins/web-to-penpot/manifest.json"
+        | "/plugins/web-to-penpot/plugin.js"
+        | "/plugins/web-to-penpot/index.html" => Some("no-cache"),
+        _ if path.starts_with("/plugins/web-to-penpot/assets/") => {
+            Some("public, max-age=31536000, immutable")
+        }
+        _ => None,
+    };
+    if let Some(value) = value {
+        response
+            .headers_mut()
+            .insert(header::CACHE_CONTROL, HeaderValue::from_static(value));
+    }
+    response
 }
 
 fn frontend_config(public_origin: &str) -> Response<Body> {
@@ -405,6 +429,12 @@ mod tests {
         let directory = tempfile::tempdir().unwrap();
         fs::write(directory.path().join("index.html"), "desktop index").unwrap();
         fs::write(directory.path().join("app.js"), "console.log('desktop')").unwrap();
+        let plugin = directory.path().join("plugins/web-to-penpot");
+        fs::create_dir_all(plugin.join("assets")).unwrap();
+        fs::write(plugin.join("manifest.json"), "{}").unwrap();
+        fs::write(plugin.join("plugin.js"), "plugin").unwrap();
+        fs::write(plugin.join("index.html"), "plugin ui").unwrap();
+        fs::write(plugin.join("assets/index-hash.css"), "styles").unwrap();
         directory
     }
 
@@ -458,6 +488,7 @@ mod tests {
             .unwrap();
         assert_eq!(health.status(), reqwest::StatusCode::OK);
         assert_eq!(health.headers()[header::X_CONTENT_TYPE_OPTIONS], "nosniff");
+        assert_eq!(health.headers()[header::X_FRAME_OPTIONS], "DENY");
         assert_eq!(
             health.json::<serde_json::Value>().await.unwrap(),
             serde_json::json!({
@@ -468,6 +499,24 @@ mod tests {
 
         let script = reqwest::get(format!("{base_url}/app.js")).await.unwrap();
         assert_eq!(script.text().await.unwrap(), "console.log('desktop')");
+
+        for path in ["manifest.json", "plugin.js", "index.html"] {
+            let plugin = reqwest::get(format!("{base_url}/plugins/web-to-penpot/{path}"))
+                .await
+                .unwrap();
+            assert_eq!(plugin.headers()[header::X_FRAME_OPTIONS], "SAMEORIGIN");
+            assert_eq!(plugin.headers()[header::CACHE_CONTROL], "no-cache");
+        }
+
+        let asset = reqwest::get(format!(
+            "{base_url}/plugins/web-to-penpot/assets/index-hash.css"
+        ))
+        .await
+        .unwrap();
+        assert_eq!(
+            asset.headers()[header::CACHE_CONTROL],
+            "public, max-age=31536000, immutable"
+        );
 
         gateway.stop().await.unwrap();
     }

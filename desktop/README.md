@@ -9,6 +9,7 @@ backup flow, and desktop UI. Penpot services stay isolated on loopback ports.
 ## Development
 
 ```bash
+pnpm --dir ../plugins install --frozen-lockfile
 pnpm install
 pnpm run test:rust
 pnpm run dev
@@ -21,6 +22,11 @@ The checked-in runtime manifest defines the required files for each target.
 The stage-one command-line compatibility gate lives in
 [`compatibility/`](compatibility/README.md). Run it against each assembled
 runtime and resolve failures during stage two; it does not block implementation.
+
+The desktop build first builds Web to Penpot and copies its static files to
+`ui/plugins/web-to-penpot/`. Install the plugin from the matching public origin
+at `/plugins/web-to-penpot/manifest.json`. The generated directory is ignored;
+release builds always replace it from the plugin source.
 
 ## Runtime integrity lock
 

@@ -1,0 +1,162 @@
+:root {
+  color-scheme: light dark;
+  font-family: Inter, system-ui, sans-serif;
+  color: #1f2937;
+  background: #f4f5f6;
+}
+
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+button,
+.paste-zone {
+  font: inherit;
+}
+.shell {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+header,
+.section-title,
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+h1,
+h2,
+p {
+  margin: 0;
+}
+h1 {
+  font-size: 18px;
+}
+h2 {
+  font-size: 14px;
+}
+header p,
+.status {
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 12px;
+}
+.card {
+  padding: 14px;
+  border: 1px solid #d7dce1;
+  border-radius: 10px;
+  background: #fff;
+}
+button {
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid #bcc4cc;
+  border-radius: 7px;
+  background: #fff;
+  color: #111827;
+  cursor: pointer;
+}
+button:hover {
+  background: #f1f5f9;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+button.primary {
+  border-color: #0e0e0e;
+  background: #0e0e0e;
+  color: #7efff5;
+}
+.paste-zone {
+  margin-top: 10px;
+  padding: 14px;
+  border: 1px dashed #94a3b8;
+  border-radius: 7px;
+  color: #475569;
+  font-size: 12px;
+  text-align: center;
+  outline: none;
+}
+.paste-zone:focus {
+  border-color: #0e7490;
+  box-shadow: 0 0 0 2px #a5f3fc;
+}
+.badge {
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #166534;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.badge.unsupported {
+  background: #fee2e2;
+  color: #991b1b;
+}
+dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 12px 0;
+}
+dl div {
+  padding: 8px;
+  border-radius: 6px;
+  background: #f8fafc;
+}
+dt {
+  color: #64748b;
+  font-size: 11px;
+}
+dd {
+  margin: 3px 0 0;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+progress {
+  width: 100%;
+  height: 8px;
+  margin: 12px 0;
+  accent-color: #0e7490;
+}
+pre {
+  max-height: 180px;
+  overflow: auto;
+  padding: 10px;
+  border-radius: 6px;
+  background: #111827;
+  color: #d1fae5;
+  font-size: 10px;
+  white-space: pre-wrap;
+}
+.hidden {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color: #e5e7eb;
+    background: #111315;
+  }
+  .card,
+  button {
+    border-color: #41474f;
+    background: #202326;
+    color: #e5e7eb;
+  }
+  button:hover,
+  dl div {
+    background: #2b3035;
+  }
+  header p,
+  .status,
+  .paste-zone,
+  dt {
+    color: #aab4c0;
+  }
+}

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Web to Penpot</title>
+  </head>
+  <body>
+    <main class="shell">
+      <header>
+        <div>
+          <h1>Web to Penpot</h1>
+          <p>把 Copy to Design 的离线剪贴板转换成可编辑图层。</p>
+        </div>
+        <span id="version" class="badge">检查中</span>
+      </header>
+
+      <section class="card">
+        <button id="read" class="primary" type="button">读取剪贴板</button>
+        <div id="paste-zone" class="paste-zone" tabindex="0">
+          如果浏览器不允许读取剪贴板，请点击这里后按 Ctrl/⌘ + V
+        </div>
+        <p id="status" class="status" role="status">
+          请先在 Copy to Design 中复制网页或所选元素。
+        </p>
+      </section>
+
+      <section id="preview" class="card hidden" aria-live="polite">
+        <div class="section-title">
+          <h2>导入预览</h2>
+          <span id="size"></span>
+        </div>
+        <dl>
+          <div>
+            <dt>名称</dt>
+            <dd id="title"></dd>
+          </div>
+          <div>
+            <dt>图层</dt>
+            <dd id="nodes"></dd>
+          </div>
+          <div>
+            <dt>资源</dt>
+            <dd id="assets"></dd>
+          </div>
+          <div>
+            <dt>警告</dt>
+            <dd id="warnings"></dd>
+          </div>
+        </dl>
+        <div class="actions">
+          <button id="import" class="primary" type="button" disabled>
+            导入到当前画布
+          </button>
+          <button id="clear" type="button">清除</button>
+        </div>
+      </section>
+
+      <section id="progress-card" class="card hidden" aria-live="polite">
+        <div class="section-title">
+          <h2>正在导入</h2>
+          <span id="progress-label"></span>
+        </div>
+        <progress id="progress" value="0" max="1"></progress>
+        <button id="cancel" type="button">取消导入</button>
+      </section>
+
+      <section id="result" class="card hidden" aria-live="polite">
+        <div class="section-title">
+          <h2>导入报告</h2>
+          <span id="result-summary"></span>
+        </div>
+        <pre id="report"></pre>
+        <button id="download" type="button">下载 JSON 报告</button>
+      </section>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

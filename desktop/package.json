@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "tauri dev",
+    "prebuild": "node scripts/prepare-web-to-penpot.mjs",
     "build": "node packaging/package.mjs",
+    "prepare:web-to-penpot": "node scripts/prepare-web-to-penpot.mjs",
     "build:sources": "node packaging/build-sources.mjs",
     "assemble:macos": "node packaging/assemble-macos.mjs",
     "prepare:macos": "node packaging/prepare-macos.mjs",

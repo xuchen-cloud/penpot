@@ -25,7 +25,7 @@
     "lint": "pnpm -r --parallel lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,html,css}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,html,css}\"",
-    "test": "pnpm --filter @penpot/plugins-runtime --filter lorem-ipsum-plugin --filter colors-to-tokens-plugin test",
+    "test": "pnpm --filter @penpot/plugins-runtime --filter lorem-ipsum-plugin --filter colors-to-tokens-plugin --filter web-to-penpot-plugin test",
     "test:e2e": "pnpm --filter e2e test",
     "build:doc": "typedoc --tsconfig libs/plugins-runtime/tsconfig.lib.json --customCss ./tools/typedoc.css --out dist/doc",
     "release": "tsx ./tools/scripts/publish.ts"
