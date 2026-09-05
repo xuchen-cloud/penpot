@@ -152,7 +152,7 @@ Identify:
 - **Milestone:** always copy what's on the PR.
 
   ```bash
-  gh pr view <PR_NUMBER> --json milestone --jq '.milestone.title'
+  gh pr view <PR_NUMBER> --repo "$ISSUE_REPO" --json milestone --jq '.milestone.title'
   ```
 
   If the PR has no milestone, create the issue without one.
