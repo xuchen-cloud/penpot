@@ -33,14 +33,12 @@
   - Before `gh pr create` / `gh pr edit` → `mem:workflow/creating-prs` (title format, body structure, AI note)
   Don't infer format from the title of a previous commit/issue/PR — the memory
   is the source of truth.
-- **Use the branch-review-merge workflow for changes unless the user explicitly
-  asks for a different workflow.** Start from the intended target branch, create
-  a `codex/` topic branch, implement and test there, commit the topic branch, then
-  run the `$code-review` two-axis review against the target branch: Standards and
-  Spec. Fix blocking findings and repeat the affected review before merging the
-  reviewed topic branch into the local target branch. Do not treat tests as a
-  substitute for either review axis. Creating a PR still requires an explicit
-  request, and pushing still requires an explicit request as defined above.
+- **Use the branch-review-merge workflow in `mem:workflow/creating-commits` for
+  all repository changes unless the user explicitly asks for a different
+  workflow.** The required path is a `codex/` topic branch, tests, a branch
+  commit, separate Standards and Spec review axes, fixes for blocking findings,
+  and a local merge into the target branch. Tests do not replace either review
+  axis. Creating a PR and pushing each still require an explicit request.
 
 ## CRITICAL: Read module memories BEFORE writing any code
 

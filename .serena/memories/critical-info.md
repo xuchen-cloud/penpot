@@ -10,7 +10,7 @@ You are working on the GitHub project `penpot/penpot`, a monorepo.
 
 # Development workflow
 
-- Issue and PR creation is **on explicit request only**. For code and documentation changes, use the default topic-branch workflow unless the user explicitly requests a different workflow: create a `codex/` branch from the intended target, implement and test, commit the branch, run the `$code-review` Standards and Spec axes against the target, fix blocking findings, then merge the reviewed branch into the local target. Before any commit, issue, or PR action, read the relevant memory — don't infer format from prior examples:
+- Issue and PR creation is **on explicit request only**. For all repository changes, follow the default branch-review-merge workflow in `mem:workflow/creating-commits` unless the user explicitly requests a different workflow. Before any commit, issue, or PR action, read the relevant memory — don't infer format from prior examples:
   - Before `git commit` → `mem:workflow/creating-commits` (subject format, body, `AI-assisted-by: model-name` trailer)
   - Before `gh issue create` → `mem:workflow/creating-issues` (title derivation, body template, labels, Issue Type)
   - Before `gh pr create` / `gh pr edit` → `mem:workflow/creating-prs` (title format, body structure, "Note:" line)
