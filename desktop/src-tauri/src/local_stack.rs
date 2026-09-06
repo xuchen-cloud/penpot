@@ -300,7 +300,7 @@ fn backend(component: &RuntimeComponent, config: &LocalStackConfig<'_>) -> Resul
             ("PENPOT_OBJECTS_STORAGE_BACKEND".to_owned(), "fs".to_owned()),
             (
                 "PENPOT_OBJECTS_STORAGE_FS_DIRECTORY".to_owned(),
-                display(&config.paths.assets),
+                "assets".to_owned(),
             ),
             ("PENPOT_TELEMETRY_ENABLED".to_owned(), "false".to_owned()),
             (
@@ -600,6 +600,10 @@ mod tests {
                 .arguments
                 .iter()
                 .any(|value| value == config.secrets.cache_password)
+        );
+        assert_eq!(
+            specs[3].command.environment["PENPOT_OBJECTS_STORAGE_FS_DIRECTORY"],
+            "assets"
         );
     }
 
