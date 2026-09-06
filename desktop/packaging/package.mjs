@@ -17,7 +17,6 @@ try {
   if (process.platform === "win32") {
     config.bundle.resources[join(desktopRoot, "src-tauri", "target", target, "release", "penpot-desktop-compat.exe")] = "acceptance/penpot-desktop-compat.exe";
     config.bundle.resources[join(desktopRoot, "compatibility", "plans", `${target}.json`)] = "acceptance/windows-plan.json";
-    config.bundle.resources[join(desktopRoot, ".cache/runtime-prepared", target, "webview2/MicrosoftEdgeWebView2RuntimeInstallerX64.exe")] = "MicrosoftEdgeWebView2RuntimeInstallerX64.exe";
     config.bundle.windows = {
       webviewInstallMode: {
         type: "offlineInstaller",
