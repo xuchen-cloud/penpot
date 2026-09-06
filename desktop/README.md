@@ -19,6 +19,54 @@ The runtime binaries are not stored in Git. Release jobs assemble the pinned
 runtime under `src-tauri/resources/runtime/<target-triple>/` before packaging.
 The checked-in runtime manifest defines the required files for each target.
 
+Runtime downloads use a verified persistent cache at
+`desktop/.cache/runtime-downloads/`. A warm preparation reuses an entry only
+after its SHA-256 checksum passes. Set `PENPOT_DESKTOP_DOWNLOAD_CACHE` when CI or
+a developer needs the same cache contract at another persistent path.
+Before using the network, preparation checks the shared local source directory
+at `../tools/downloads` (resolved from the project root) and imports a matching
+file only when its declared checksum passes. Override that read-only source with
+`PENPOT_DESKTOP_DOWNLOAD_SOURCE`.
+
+On the Windows development host, Render WASM uses Emscripten 4.0.6 from
+`D:\Program Files\emsdk` by default. Set `PENPOT_BUILD_EMSDK` to use another
+verified SDK location; macOS and CI must set it explicitly.
+
+pnpm keeps downloaded package data under `desktop/.cache/pnpm-store/` during
+source builds and runtime assembly. Set `PENPOT_PNPM_STORE` only when a shared
+CI cache must use another persistent path.
+Clojure uses `desktop/.cache/m2/`, `desktop/.cache/clojure-config/`, and
+`desktop/.cache/clojure-cache/` for the same reason. Git dependencies use
+`desktop/.cache/gitlibs/`. Existing `CLJ_CONFIG`, `CLJ_CACHE`, and `GITLIBS`
+values take precedence.
+
+Prepare selected archives or verify a staged source artifact set with:
+
+```bash
+node packaging/runtime-downloads.mjs packaging/runtime-metadata.macos.json node chromium
+node packaging/verify-shared-artifacts.mjs target/shared-artifacts/2.17.0-desktop.1
+```
+
+Pass two shared artifact roots to the second command to require identical
+manifests from two clean builds.
+
+Windows build tools that need prefix arguments can be supplied without a shell
+through JSON arrays. For example, set `PENPOT_BUILD_CLOJURE_COMMAND` to a
+PowerShell executable plus the arguments that import or run the Clojure module,
+and set `PENPOT_BUILD_PNPM_COMMAND` to Node plus pnpm's JavaScript entry point.
+The older `PENPOT_BUILD_CLOJURE` and `PENPOT_BUILD_PNPM` executable-only values
+remain supported.
+By default, Windows source builds use `invoke-clojure-windows.ps1`; it locates
+one cached JDK and ClojureTools module under `desktop/.cache/toolchains/` and
+normalizes the combined `-M:`, `-T:`, and `-X:` forms expected by the Unix CLI.
+The adapter transports each argument in a Base64 envelope because PowerShell
+splits combined Clojure aliases before a `-File` script receives them.
+
+Source builds derive `BUILD_DATE`, `BUILD_TS`, and `SOURCE_DATE_EPOCH` from the
+Git revision. Backend JAR entries use that fixed time, and compile-time font IDs
+are deterministic. These rules allow two isolated builds on one host to produce
+the same shared manifest and checksums.
+
 The stage-one command-line compatibility gate lives in
 [`compatibility/`](compatibility/README.md). Run it against each assembled
 runtime and resolve failures during stage two; it does not block implementation.

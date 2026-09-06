@@ -95,6 +95,8 @@ opencode.json
 /desktop/src-tauri/target/
 /desktop/src-tauri/gen/
 /desktop/src-tauri/resources/runtime/
+/desktop/.cache/
+/desktop/target/
 /**/node_modules
 /**/.yarn/*
 /.pnpm-store

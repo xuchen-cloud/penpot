@@ -20,7 +20,8 @@
     :js-provider :import}
 
    :compiler-options
-   {:output-feature-set :es2020
+   {:parallel-build false
+    :output-feature-set :es2020
     :output-wrapper false}
 
    :release

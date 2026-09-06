@@ -411,7 +411,7 @@ mod tests {
         assert!(config.contains("bind 127.0.0.1"));
         assert!(config.contains("port 6380"));
         assert!(config.contains("requirepass abc123"));
-        assert!(config.contains(&format!("dir \"{}\"", directory.path().display())));
+        assert!(config.contains(&format!("dir {}", valkey_quote(directory.path()).unwrap())));
         drop(config_file);
         assert!(!directory.path().join("valkey.conf").exists());
     }

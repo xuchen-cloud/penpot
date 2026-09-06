@@ -1,4 +1,3 @@
-import proc from "node:child_process";
 import fs from "node:fs/promises";
 import ph from "node:path";
 import os from "node:os";
@@ -50,19 +49,32 @@ async function findFiles(basePath, predicate, options = {}) {
   return files;
 }
 
-function syncDirs(originPath, destPath, excludes = []) {
-  const excludeArgs = excludes.map((p) => `--exclude=${p}`).join(" ");
-  const command = `rsync -ar --delete ${excludeArgs} ${originPath} ${destPath}`;
+async function syncDirs(originPath, destPath, excludes = []) {
+  const excluded = new Set(excludes);
+  await fs.mkdir(destPath, { recursive: true });
 
-  return new Promise((resolve, reject) => {
-    proc.exec(command, (cause, stdout) => {
-      if (cause) {
-        reject(cause);
-      } else {
-        resolve();
-      }
-    });
-  });
+  for (const entry of await fs.readdir(destPath, { withFileTypes: true })) {
+    if (!excluded.has(entry.name)) {
+      await fs.rm(ph.join(destPath, entry.name), {
+        recursive: true,
+        force: true,
+      });
+    }
+  }
+
+  for (const entry of await fs.readdir(originPath, { withFileTypes: true })) {
+    if (!excluded.has(entry.name)) {
+      await fs.cp(
+        ph.join(originPath, entry.name),
+        ph.join(destPath, entry.name),
+        {
+          recursive: true,
+          force: true,
+          preserveTimestamps: true,
+        },
+      );
+    }
+  }
 }
 
 export function isSassFile(path) {

@@ -35,6 +35,7 @@ jobs:
           elif git diff --quiet "$BASE_SHA" "$HEAD_SHA" -- \
             .github/workflows/tests-desktop.yml \
             desktop \
+            render-wasm \
             plugins/apps/web-to-penpot-plugin \
             plugins/package.json \
             plugins/pnpm-lock.yaml \
@@ -82,6 +83,9 @@ jobs:
 
       - name: Prepare bundled plugins
         run: pnpm --dir desktop prepare:web-to-penpot
+
+      - name: Test Desktop packaging scripts
+        run: pnpm --dir desktop test:node
 
       - name: Check runner architecture
         run: |

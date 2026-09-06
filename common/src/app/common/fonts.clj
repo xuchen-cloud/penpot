@@ -8,10 +8,17 @@
   "A fonts loading macros."
 
   (:require
-   [app.common.uuid :as uuid]
    [clojure.data.json :as json]
    [clojure.java.io :as io]
-   [cuerdas.core :as str]))
+   [cuerdas.core :as str])
+  (:import
+   (java.nio.charset StandardCharsets)
+   (java.util UUID)))
+
+(defn- gfont-uuid
+  [id]
+  (UUID/nameUUIDFromBytes
+   (.getBytes (str "penpot:gfont:" id) StandardCharsets/UTF_8)))
 
 (defn- parse-gfont-variant
   [variant files]
@@ -33,10 +40,11 @@
 (defn- parse-gfont
   [font]
   (let [family (get font "family")
+        id (str "gfont-" (str/slug family))
         variants (get font "variants")
         files (get font "files")]
-    {:id (str "gfont-" (str/slug family))
-     :uuid (uuid/random)
+    {:id id
+     :uuid (gfont-uuid id)
      :family family
      :name family
      :variants (into [] (comp (map (fn [variant] (parse-gfont-variant variant files)))
