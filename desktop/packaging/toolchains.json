@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "toolchains": {
+    "clojure": "1.12.5.1664",
+    "emscripten": "4.0.6",
+    "emscripten-revision": "1ddaae4d2d6dfbb678ecc193bc988820d1fc4633",
+    "java": "26.0.2.1",
+    "node": "24.19.0",
+    "pnpm-modules": "12.0.0",
+    "pnpm-root": "11.20.0",
+    "rust": "1.91.0",
+    "skia-binaries": "319323662b1685a112f5",
+    "skia-safe": "0.93.1"
+  },
+  "renderWasm": {
+    "cargoTarget": "wasm32-unknown-emscripten",
+    "skiaBinariesUrl": "https://github.com/penpot/skia-binaries/releases/download/0.93.1/skia-binaries-319323662b1685a112f5-wasm32-unknown-emscripten-gl-svg-textlayout-binary-cache-webp.tar.gz",
+    "commonFlags": [
+      "--no-entry",
+      "--js-library",
+      "src/js/wapi.js",
+      "-sMALLOC=dlmalloc",
+      "-sINVOKE_RUN=0",
+      "-sALLOW_TABLE_GROWTH=0",
+      "-sALLOW_MEMORY_GROWTH=1",
+      "-sINITIAL_HEAP=268435456",
+      "-sMEMORY_GROWTH_GEOMETRIC_STEP=0.8",
+      "-sERROR_ON_UNDEFINED_SYMBOLS=0",
+      "-sMAX_WEBGL_VERSION=2",
+      "-sEXPORT_NAME=createRustSkiaModule",
+      "-sEXPORTED_RUNTIME_METHODS=GL,UTF8ToString,stringToUTF8,HEAPU8,HEAP32,HEAPU32,HEAPF32",
+      "-sENVIRONMENT=web,worker,node",
+      "-sMODULARIZE=1",
+      "-sDISABLE_EXCEPTION_CATCHING=1",
+      "-sFILESYSTEM=0",
+      "-sEXPORT_ES6=1"
+    ],
+    "profiles": {
+      "frontend": {
+        "cargoArguments": ["--release"],
+        "cargoProfile": "release",
+        "emccFlags": ["-O3", "-sASSERTIONS=0"]
+      },
+      "export": {
+        "cargoArguments": ["--profile", "size"],
+        "cargoProfile": "size",
+        "emccFlags": ["-Oz", "-sASSERTIONS=0"]
+      }
+    }
+  }
+}

@@ -1,6 +1,6 @@
 # Penpot Desktop 项目状态与后续计划
 
-更新日期：2026-09-05
+更新日期：2026-09-06
 
 本文是 Penpot Desktop 离线安装版的统一状态与规划文档。后续开发应先更新本文，再开始下一项工作。`ROADMAP.md`、`DELIVERY.md` 和兼容性报告可保留为历史和技术资料，但项目进度、执行顺序和交付判断以本文为准。
 
@@ -98,36 +98,34 @@ Codex 任务 `Penpot Desktop：交付可离线安装使用的软件包` 当前�
 
 ## 5. 当前验证结果
 
-2026-09-05 在保留改动的 worktree 中重新检查：
+2026-09-06 在保留改动的 worktree 中重新检查：
 
-- `cargo test --locked`：60 项通过，0 项失败，2 项忽略。
+- `cargo test --locked`：57 项通过，0 项失败，2 项忽略。
 - `git diff --check`：通过。
 - `cargo clippy --locked --all-targets -- -D warnings`：通过。
 - `cargo fmt -- --check`：通过。
-- 5 项 Node 单元测试、JavaScript 脚本语法和相关 JSON 解析：通过。
+- 47 项 Desktop Node 单元测试、JavaScript 脚本语法、PowerShell 语法和相关 JSON 解析：通过。
+- Windows 统一源码构建完成两轮独立全量构建；两轮各含 6 个组件和 810 个声明文件，文件集合、大小、SHA-256、来源与工具链清单一致。
+- macOS 14 CI 已配置共享 Node/Rust 检查，但当前功能分支尚无 macOS 实跑记录，状态为“已配置，待验证”。
 - 缺少完整 `desktop/src-tauri/resources/runtime/<target>`，打包保护按预期拒绝产出安装包。
 
 ## 6. 当前卡点
 
-### 6.1 Render WASM 构建失败
+### 6.1 Render WASM 已完成可复现构建闭环
 
-统一源码构建在前端 Render WASM 链接阶段停止。一次实验同时使用
-`-fwasm-exceptions` 和 `SUPPORT_LONGJMP=emscripten`，两者不兼容；另一次
-去掉 longjmp 后又出现 `invoke_ functions exported but exceptions and longjmp are both disabled`。
-审查已撤销失败的 `_build_env` 实验参数，后续仍需确认受支持的组合。
+- 已固定 Rust 1.91.0、Emscripten 4.0.6（`1ddaae4d`）和 Skia 版本。
+- Windows 默认读取 `D:\Program Files\emsdk`，不运行会改写 SDK 目录的环境脚本。
+- Frontend 与 Exporter 均从两个独立输出目录构建并通过真实模块加载测试。
+- 路径重映射移除了构建机和输出目录绝对路径，两轮 JS 与 WASM 哈希逐项一致。
+- Frontend WASM SHA-256 为 `3696c94d2f3167a5476d969f00f6e9581b64877531e8de70e818ab562ec5dadb`。
+- Exporter WASM SHA-256 为 `47f610db8d48ff822d111a4fe3a7b56605a877c478315e1ec1b90559ee3626a8`。
 
-恢复时需要先确定仓库支持的 Rust、Emscripten 和 Skia 构建参数组合，再固定版本和环境。不要继续在完整流水线中试错；先用最小 Render WASM 构建命令闭环。
+### 6.2 共享下载缓存已实现
 
-### 6.2 下载流程慢且重复
-
-`prepare-macos.mjs` 下载 Node 22.18.0 时速度很慢，同时还有另一套 curl 下载相同文件。两个进程写不同临时路径，但都消耗网络和时间。准备脚本还需要：
-
-- 统一缓存目录。
-- 已下载文件的校验和复用。
-- 临时文件与原子改名。
-- 合理的超时、有限重试和失败提示。
-- 必要时支持断点续传。
-- 防止同一目标并发准备。
+- 默认持久化目录为 `desktop/.cache/runtime-downloads/`，打包不会重复下载已校验文件。
+- 网络下载前先检查 `D:\project\tools\downloads`，仅导入 SHA-256 匹配的安装包。
+- 已实现断点续传、连接与停顿超时、有限重试、同文件系统原子提交和按目标加锁。
+- 下载与锁行为已有 Windows/macOS 共用的 Node 测试，CI 在两个系统运行。
 
 ### 6.3 没有真实安装包验收
 
@@ -152,9 +150,18 @@ Codex 任务 `Penpot Desktop：交付可离线安装使用的软件包` 当前�
 
 ## 7. 下一步执行顺序
 
-### P0：保存断点并恢复干净执行环境（已完成）
+2026-09-06 续作结果：Issue 1 的 Windows 统一源码构建、两轮完整产物比较、
+缓存与校验测试均已通过。Windows Clojure 参数、前端外部 `rsync`、插件 runtime
+隐式构建、JAR 时间、编译期随机字体 UUID 和 Shadow 并行分析导致的不稳定均已修复。
+完整日志位于 `.ci-logs/issue-1-*`，共享产物位于
+`desktop/target/shared-artifacts-repro-{a,b}`。下一项仓库开发工作是 Issue 2；
+macOS 完整源码构建仍需 macOS 主机或获准的 CI 运行。下列 P0–P7 保留为整体产品路线。
 
-预计 0.5 天。
+Issue #1 的当前实施方案见 `ISSUE-1-IMPLEMENTATION-PLAN.md`。执行以 Windows
+为首个开发和验证环境，共用下载、锁、产物清单和 Render WASM 接口从第一步
+起保持 macOS 兼容，并在两个目标的 CI 中验证。
+
+### P0：保存断点并恢复干净执行环境（已完成）
 
 - 已复核 diff，移除无关代理规则和失败的 Render WASM 实验参数。
 - 已停止重复下载流程，只保留一个带校验的有效流程。
@@ -167,8 +174,6 @@ Codex 任务 `Penpot Desktop：交付可离线安装使用的软件包` 当前�
 
 ### P1：单独解决 Render WASM 构建
 
-预计 0.5–2 天。
-
 - 读取 Render WASM 模块记忆与现有 CI 构建方式。
 - 找到仓库当前支持的 Rust 与 Emscripten 版本组合。
 - 对齐 exception 与 longjmp 参数，撤销无依据的 `_build_env` 临时修改。
@@ -179,8 +184,6 @@ Codex 任务 `Penpot Desktop：交付可离线安装使用的软件包` 当前�
 
 ### P2：让 macOS 准备和源码构建可重复
 
-预计 1–2 天，下载时间另计。
-
 - 为 Node、Chromium、JRE 和其他归档加入缓存、校验、有限重试与并发锁。
 - 记录每个组件的版本、来源、许可证、目标、校验和与构建方法。
 - 完成 Backend、Frontend、两个 WASM、Exporter 和 Media Processor 的一次统一构建。
@@ -189,8 +192,6 @@ Codex 任务 `Penpot Desktop：交付可离线安装使用的软件包` 当前�
 完成条件：`prepare-macos` 和 `build-sources` 在清理构建输出后仍能一次通过，重复运行能安全复用缓存。
 
 ### P3：产出首个 unsigned macOS ARM64 开发包
-
-预计 1–3 天。
 
 - 收集 PostgreSQL 15、Valkey、JRE、Node.js、Chromium、字体和媒体工具。
 - 完成可重定位复制和 dylib/rpath 修正。
@@ -201,8 +202,6 @@ Codex 任务 `Penpot Desktop：交付可离线安装使用的软件包` 当前�
 完成条件：安装包能复制到未安装开发工具的干净目录，并在断网时启动到首次设置界面。
 
 ### P4：macOS 本地栈闭环
-
-预计 2–5 天，取决于真实运行问题。
 
 - 从空数据目录初始化 PostgreSQL 并运行全部迁移。
 - 创建管理员账号，进入编辑器，新建设计并保存。
@@ -215,8 +214,6 @@ Codex 任务 `Penpot Desktop：交付可离线安装使用的软件包` 当前�
 
 ### P5：Windows 对等实现
 
-预计 1–3 周。
-
 - 准备并固定 Windows x64 所有运行时。
 - 实现并验证 Credential Manager、owner-only ACL 和 Job Object。
 - 完整验证 Garnet 兼容性；失败时作出 Valkey 替代决策。
@@ -226,8 +223,6 @@ Codex 任务 `Penpot Desktop：交付可离线安装使用的软件包` 当前�
 完成条件：Windows 11 断网安装和核心使用流程通过，退出后无残留进程。
 
 ### P6：离线产品行为与数据安全
-
-预计 1–2 周。
 
 - 完成首位管理员与邀请注册流程。
 - 默认关闭 telemetry、外部身份、邮件、Webhook 和其他公网集成。
@@ -241,8 +236,6 @@ Codex 任务 `Penpot Desktop：交付可离线安装使用的软件包` 当前�
 完成条件：异常退出、升级失败和恢复流程不会破坏用户数据，默认模式无后台公网请求。
 
 ### P7：发布验收
-
-预计 1–2 周，不含等待外部签名资质的时间。
 
 - 构建并公证 macOS DMG，签名 Windows NSIS。
 - 固定应用标识、Windows upgrade GUID 和版本规则。
@@ -290,8 +283,6 @@ Codex 任务 `Penpot Desktop：交付可离线安装使用的软件包` 当前�
 
 ## 10. 下一次继续时的第一组动作
 
-1. 先改进下载缓存、断点续传和并发锁，再处理未通过校验的 Node 部分下载。
-2. 单独处理 Render WASM，不同时启动完整下载和打包。
-3. 找到受支持的 Rust、Emscripten、Skia exception/longjmp 参数组合。
-4. 单独构建并加载前端和 Exporter 的 WASM，各重复一次。
-5. Render WASM 闭环后，再以低频检查运行完整源码构建。
+1. 在新任务中读取 Issue 2 及相关模块记忆，保留 Issue 1 的共享构件契约。
+2. 以 Windows x64 为先实现对应平台工作，不把安装包工作倒灌进 Issue 1。
+3. 在可用的 Apple Silicon 主机或获准 CI 上补充 Issue 1 的 macOS 统一源码构建证据。

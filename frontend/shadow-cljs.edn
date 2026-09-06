@@ -68,7 +68,8 @@
     :external-index-format :esm}
 
    :compiler-options
-   {:output-feature-set :es2020
+   {:parallel-build false
+    :output-feature-set :es2020
     :output-wrapper false
     :warnings {:fn-deprecated false}}
 
@@ -109,7 +110,8 @@
     :export-conditions ["module" "import", "browser" "require" "default"]}
 
    :compiler-options
-   {:output-feature-set :es2020
+   {:parallel-build false
+    :output-feature-set :es2020
     :output-wrapper false
     :warnings {:fn-deprecated false}}
 

@@ -78,6 +78,9 @@ jobs:
       - name: Prepare bundled plugins
         run: pnpm --dir desktop prepare:web-to-penpot
 
+      - name: Test Desktop packaging scripts
+        run: pnpm --dir desktop test:node
+
       - name: Check runner architecture
         run: |
           host_target="$(rustc -vV | sed -n 's/^host: //p')"
