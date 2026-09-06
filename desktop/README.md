@@ -58,6 +58,10 @@ manifests from two clean builds.
 
 ### Windows 11 x64 packaging
 
+完整的重建步骤、代码更新影响检查和已知问题见
+[`WINDOWS_BUILD_GUIDE.md`](WINDOWS_BUILD_GUIDE.md)。后续 agent 应先阅读该文档，
+再启动 Windows 长构建。
+
 Windows packaging runs natively and does not use Docker or WSL. Visual Studio
 2022 C++ build tools are the only system build prerequisite. The preparation
 step downloads checksum-pinned archives, builds Garnet as a self-contained
