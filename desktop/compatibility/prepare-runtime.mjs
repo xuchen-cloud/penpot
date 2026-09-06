@@ -3,6 +3,8 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
 
+import { fontForgeStringLiteral } from "./fontforge-command.mjs";
+
 const sourceRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const compatibilityRoot = join(sourceRoot, "desktop", "compatibility");
 const runtimeRoot = resolve(process.argv[2] ?? "");
@@ -25,11 +27,11 @@ await copyFile(join(sourceRoot, "frontend", "resources", "fonts", "WorkSans-Regu
 
 const fontforge =
   target === "windows"
-    ? join(runtimeRoot, "tools", "fontforge.exe")
+    ? join(runtimeRoot, "tools", "fontforge", "bin", "fontforge.exe")
     : join(runtimeRoot, "tools", "bin", "fontforge");
-const ttf = join(fixtureRoot, "font.ttf").replaceAll("'", "''");
-const otf = join(fixtureRoot, "font.otf").replaceAll("'", "''");
-await run(fontforge, ["-lang=ff", "-c", `Open('${ttf}'); Generate('${otf}')`]);
+const ttf = fontForgeStringLiteral(join(fixtureRoot, "font.ttf"));
+const otf = fontForgeStringLiteral(join(fixtureRoot, "font.otf"));
+await run(fontforge, ["-lang=ff", "-c", `Open(${ttf}); Generate(${otf})`]);
 
 function run(executable, args) {
   return new Promise((resolvePromise, reject) => {

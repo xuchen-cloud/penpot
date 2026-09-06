@@ -7,11 +7,11 @@
     { "id": "version.cache", "action": "command", "command": { "executable": "garnet/GarnetServer.exe", "arguments": ["--version"] } },
     { "id": "version.java", "action": "command", "command": { "executable": "jre/bin/java.exe", "arguments": ["--version"] } },
     { "id": "version.node", "action": "command", "command": { "executable": "node/node.exe", "arguments": ["--version"] } },
-    { "id": "version.chromium", "action": "command", "command": { "executable": "chromium/chrome.exe", "arguments": ["--version"] } },
+    { "id": "version.chromium", "action": "command", "command": { "executable": "node/node.exe", "arguments": ["{{runtime_root}}/compat/check.mjs", "chromium", "{{runtime_root}}/chromium/chrome.exe", "{{work_root}}/artifacts/chromium-version.html"] }, "expectedArtifacts": [{ "path": "artifacts/chromium-version.html", "minimumBytes": 20 }] },
     { "id": "postgres.initialize", "action": "command", "command": { "executable": "postgres/bin/initdb.exe", "arguments": ["-D", "{{work_root}}/database", "--username=penpot", "--auth=trust", "--data-checksums", "--no-locale", "--encoding=UTF8"] } },
     { "id": "postgres.start.first", "action": "start", "processId": "postgres", "command": { "executable": "postgres/bin/postgres.exe", "arguments": ["-D", "{{work_root}}/database", "-h", "127.0.0.1", "-p", "{{port.postgres}}"] }, "ready": { "host": "127.0.0.1", "port": "postgres", "timeoutSeconds": 30 } },
     { "id": "postgres.create-database", "action": "command", "command": { "executable": "postgres/bin/createdb.exe", "arguments": ["-h", "127.0.0.1", "-p", "{{port.postgres}}", "-U", "penpot", "penpot"] } },
-    { "id": "cache.start", "action": "start", "processId": "cache", "command": { "executable": "garnet/GarnetServer.exe", "arguments": ["--address", "127.0.0.1", "--port", "{{port.cache}}", "--lua"] }, "ready": { "host": "127.0.0.1", "port": "cache", "timeoutSeconds": 30 } },
+    { "id": "cache.start", "action": "start", "processId": "cache", "command": { "executable": "garnet/GarnetServer.exe", "arguments": ["--bind", "127.0.0.1", "--port", "{{port.cache}}", "--lua"] }, "ready": { "host": "127.0.0.1", "port": "cache", "timeoutSeconds": 30 } },
     { "id": "cache.compatibility", "action": "cache_compatibility", "port": "cache" },
     {
       "id": "service.media-processor",
@@ -24,7 +24,7 @@
           "PENPOT_MEDIA_PROCESSOR_HOST": "127.0.0.1",
           "PENPOT_MEDIA_PROCESSOR_PORT": "{{port.media}}",
           "PENPOT_MEDIA_PROCESSOR_SHARED_KEY": "desktop-compatibility-key",
-          "PATH": "{{runtime_root}}/tools",
+          "PATH": "{{runtime_root}}/tools/imagemagick;{{runtime_root}}/tools/potrace;{{runtime_root}}/tools/fontforge/bin;{{runtime_root}}/tools/woff;{{runtime_root}}/tools/woff2",
           "PENPOT_MEDIA_PROCESSOR_LOG_LEVEL": "info"
         }
       },
@@ -50,7 +50,7 @@
           "PENPOT_MEDIA_PROCESSOR_SHARED_KEY": "desktop-compatibility-key",
           "PENPOT_EXPORTER_SHARED_KEY": "desktop-compatibility-exporter-key",
           "PENPOT_OBJECTS_STORAGE_BACKEND": "fs",
-          "PENPOT_OBJECTS_STORAGE_FS_DIRECTORY": "{{work_root}}/assets",
+          "PENPOT_OBJECTS_STORAGE_FS_DIRECTORY": "assets",
           "PENPOT_TELEMETRY_ENABLED": "false",
           "PENPOT_FLAGS": "disable-email-verification disable-smtp"
         },
@@ -98,6 +98,9 @@
     { "id": "postgres.stop", "action": "stop", "processId": "postgres", "command": { "executable": "postgres/bin/pg_ctl.exe", "arguments": ["-D", "{{work_root}}/database", "-m", "fast", "-w", "stop"] } },
     { "id": "postgres.restart", "action": "start", "processId": "postgres", "command": { "executable": "postgres/bin/postgres.exe", "arguments": ["-D", "{{work_root}}/database", "-h", "127.0.0.1", "-p", "{{port.postgres}}"] }, "ready": { "host": "127.0.0.1", "port": "postgres", "timeoutSeconds": 30 } },
     { "id": "postgres.persistence", "action": "command", "command": { "executable": "postgres/bin/psql.exe", "arguments": ["-h", "127.0.0.1", "-p", "{{port.postgres}}", "-U", "penpot", "-d", "penpot", "-v", "ON_ERROR_STOP=1", "-Atc", "SELECT value FROM desktop_compatibility WHERE value = 'restart-ok'"], "stdoutContains": "restart-ok" } },
+    { "id": "postgres.force-stop", "action": "stop", "processId": "postgres" },
+    { "id": "postgres.recovery-restart", "action": "start", "processId": "postgres", "command": { "executable": "postgres/bin/postgres.exe", "arguments": ["-D", "{{work_root}}/database", "-h", "127.0.0.1", "-p", "{{port.postgres}}"] }, "ready": { "host": "127.0.0.1", "port": "postgres", "timeoutSeconds": 30 } },
+    { "id": "postgres.recovery-persistence", "action": "command", "command": { "executable": "postgres/bin/psql.exe", "arguments": ["-h", "127.0.0.1", "-p", "{{port.postgres}}", "-U", "penpot", "-d", "penpot", "-v", "ON_ERROR_STOP=1", "-Atc", "SELECT value FROM desktop_compatibility WHERE value = 'restart-ok'"], "stdoutContains": "restart-ok" } },
     { "id": "postgres.final-stop", "action": "stop", "processId": "postgres", "command": { "executable": "postgres/bin/pg_ctl.exe", "arguments": ["-D", "{{work_root}}/database", "-m", "fast", "-w", "stop"] } }
   ]
 }

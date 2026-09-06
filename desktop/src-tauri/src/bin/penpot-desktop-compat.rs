@@ -5,6 +5,8 @@ use std::process::ExitCode;
 use penpot_desktop_lib::compatibility::{
     CompatibilityPlan, PlanRunner, run_cache_compatibility, write_report,
 };
+use penpot_desktop_lib::credentials::SystemCredentialStore;
+use penpot_desktop_lib::paths::InstancePaths;
 use penpot_desktop_lib::runtime_manifest::{RuntimeManifest, current_target};
 
 const RUNTIME_MANIFEST: &str = include_str!("../../runtime-manifest.json");
@@ -22,6 +24,30 @@ fn main() -> ExitCode {
 
 fn run() -> penpot_desktop_lib::error::Result<bool> {
     let arguments: Vec<_> = env::args_os().skip(1).collect();
+    if arguments
+        .first()
+        .is_some_and(|value| value == "credentials")
+    {
+        if arguments.len() != 1 {
+            eprintln!("usage: penpot-desktop-compat credentials");
+            return Ok(false);
+        }
+        SystemCredentialStore::new(uuid::Uuid::new_v4()).verify_roundtrip()?;
+        println!("PASS credential-manager-roundtrip");
+        return Ok(true);
+    }
+    if arguments.first().is_some_and(|value| value == "security") {
+        if arguments.len() != 2 {
+            eprintln!("usage: penpot-desktop-compat security <work-root>");
+            return Ok(false);
+        }
+        let paths = InstancePaths::from_root(PathBuf::from(&arguments[1]));
+        paths.create()?;
+        #[cfg(windows)]
+        paths.verify_private_acls()?;
+        println!("PASS private-instance-acls");
+        return Ok(true);
+    }
     if arguments.first().is_some_and(|value| value == "cache") {
         if arguments.len() != 3 {
             eprintln!("usage: penpot-desktop-compat cache <host> <port>");

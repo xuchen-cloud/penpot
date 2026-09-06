@@ -18,6 +18,8 @@ const baseEnv = Object.fromEntries(
 const defaultClojureConfig = join(desktopRoot, ".cache/clojure-config");
 const pnpmStore =
   process.env.PENPOT_PNPM_STORE || join(desktopRoot, ".cache/pnpm-store");
+const pnpmState =
+  process.env.PENPOT_PNPM_STATE || join(desktopRoot, ".cache/pnpm-state");
 const sourceDateEpoch = execFileSync(
   "git",
   ["show", "-s", "--format=%ct", "HEAD"],
@@ -36,6 +38,7 @@ const env = {
   GITLIBS: process.env.GITLIBS || join(desktopRoot, ".cache/gitlibs"),
   NODE_ENV: "production",
   PENPOT_PNPM_STORE: pnpmStore,
+  PENPOT_PNPM_STATE: pnpmState,
   SOURCE_DATE_EPOCH: sourceDateEpoch,
   VERSION: version,
   VERSION_TAG: `${version}-${sourceDateEpoch}`,
@@ -81,7 +84,7 @@ function invokeClojure(args, cwd) {
 }
 
 function invokePnpm(args, cwd) {
-  return invokeTool(run, pnpm, ["--store-dir", pnpmStore, ...args], cwd, env);
+  return invokeTool(run, pnpm, ["--store-dir", pnpmStore, "--state-dir", pnpmState, ...args], cwd, env);
 }
 
 try {

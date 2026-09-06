@@ -59,6 +59,30 @@ impl InstancePaths {
             &self.run,
         ]
     }
+
+    #[cfg(windows)]
+    pub fn verify_private_acls(&self) -> Result<()> {
+        for path in self.directories() {
+            if !crate::windows_security::has_private_owner_acl(path)? {
+                return Err(DesktopError::Process(format!(
+                    "Windows path does not have a protected owner-only ACL: {}",
+                    path.display()
+                )));
+            }
+        }
+        let probe = tempfile::NamedTempFile::new_in(&self.config).map_err(|source| {
+            DesktopError::WriteFile {
+                path: self.config.join("acl-probe"),
+                source,
+            }
+        })?;
+        if !crate::windows_security::has_private_owner_acl(probe.path())? {
+            return Err(DesktopError::Process(
+                "files created in the private config directory are not owner-only".to_owned(),
+            ));
+        }
+        Ok(())
+    }
 }
 
 fn create_private_directory(path: &Path) -> Result<()> {
@@ -77,6 +101,9 @@ fn create_private_directory(path: &Path) -> Result<()> {
             }
         })?;
     }
+
+    #[cfg(windows)]
+    crate::windows_security::restrict_to_owner(path)?;
 
     Ok(())
 }
@@ -112,5 +139,20 @@ mod tests {
 
         let mode = fs::metadata(&paths.config).unwrap().permissions().mode() & 0o777;
         assert_eq!(mode, 0o700);
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn instance_directories_have_a_protected_owner_only_acl_on_windows() {
+        let temporary = tempfile::tempdir().unwrap();
+        let paths = InstancePaths::from_root(temporary.path().join("Penpot Desktop"));
+        paths.create().unwrap();
+
+        assert!(crate::windows_security::has_private_owner_acl(&paths.config).unwrap());
+        assert!(crate::windows_security::has_private_owner_acl(&paths.database).unwrap());
+        assert!(crate::windows_security::has_private_owner_acl(&paths.logs).unwrap());
+        assert!(crate::windows_security::has_private_owner_acl(&paths.temporary).unwrap());
+        fs::write(paths.config_file(), b"private").unwrap();
+        assert!(crate::windows_security::has_private_owner_acl(&paths.config_file()).unwrap());
     }
 }

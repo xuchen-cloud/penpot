@@ -19,7 +19,7 @@
 
 ## 2. 当前结论
 
-项目已经完成桌面运行基础、本地服务编排的大部分代码、网关、凭据存储和 macOS 打包脚本，但还没有产出完整运行时或可安装的 DMG/NSIS 包。
+项目已经完成桌面运行基础、本地服务编排的大部分代码、网关、凭据存储和 macOS 打包脚本。Windows x64 运行时已完成组装、DLL 审计和完整性锁校验，并已产出未签名 NSIS 工程包。
 
 因此当前状态是“阶段二开发中”，不能称为“已交付”或“可离线安装使用”。单元测试通过只说明模块行为可用，不代表真实安装包已通过冷启动和断网验收。
 
@@ -107,7 +107,9 @@ Codex 任务 `Penpot Desktop：交付可离线安装使用的软件包` 当前�
 - 47 项 Desktop Node 单元测试、JavaScript 脚本语法、PowerShell 语法和相关 JSON 解析：通过。
 - Windows 统一源码构建完成两轮独立全量构建；两轮各含 6 个组件和 810 个声明文件，文件集合、大小、SHA-256、来源与工具链清单一致。
 - macOS 14 CI 已配置共享 Node/Rust 检查，但当前功能分支尚无 macOS 实跑记录，状态为“已配置，待验证”。
-- 缺少完整 `desktop/src-tauri/resources/runtime/<target>`，打包保护按预期拒绝产出安装包。
+- Windows x64 运行时已生成，PE 导入审计通过（691 个二进制、0 个未解析 DLL），运行时锁校验通过。
+- Windows 运行时已剔除源码映射、调试/链接文件、测试数据和重复 ImageMagick 命令，体积由约 2.0 GB 降至约 1.67 GB。
+- NSIS 构建已产出约 0.79 GiB 的未签名工程安装器，并生成 SHA-256、许可证清单、CycloneDX SBOM 和来源证明。
 
 ## 6. 当前卡点
 
@@ -140,13 +142,16 @@ Codex 任务 `Penpot Desktop：交付可离线安装使用的软件包` 当前�
 - PNG、JPEG、WebP、SVG 和 PDF 导出。
 - 完全断网运行及无意外公网请求。
 
-### 6.4 Windows 仍停留在代码和单测层
+### 6.4 Windows Issue #2 实施状态
 
-- Credential Manager 未做 Windows 实机验证。
-- 用户数据 ACL 未完成。
-- Job Object 与退出后无子进程未完成。
-- Garnet 的字符串、哈希、扫描、Pub/Sub、阻塞队列、Lua、限流脚本和 Exporter 队列兼容性未跑。
-- Windows x64 运行时组装和 NSIS 安装未完成。
+- 已固定 PostgreSQL 15、Node 24.19、JRE、Chromium、WebView2、ImageMagick、Potrace、FontForge、Garnet 与 WOFF 构建输入的 Windows x64 来源和 SHA-256。
+- 已实现 owner-only 保护 ACL，并在本机真实 Windows ACL 上通过聚焦测试；Credential Manager 增加真实写入、读取、删除探针。
+- 已加入 PostgreSQL 强制终止、恢复重启和数据持久性兼容步骤；现有 Job Object 负责整棵子进程树的退出约束。
+- 已实现 Windows 原子准备与组装、完整 PE 普通/延迟导入 DLL 审计、末尾运行时锁、current-user NSIS 与固定 WebView2 离线安装器。
+- 已实现安装包 SHA-256、许可证清单、CycloneDX SBOM、来源证明和 Authenticode 发布门禁；无签名包只标为工程包。
+- 已加入干净机 PowerShell 验收框架，覆盖凭据、ACL、全兼容计划、非回环 TCP、升级/失败和卸载保留数据。
+- 兼容性计划已启动 PostgreSQL、Garnet、Media Processor、Backend 和 Exporter，并通过迁移、缓存、字体和 Chromium 检查；导出步骤因缺少五个真实请求 fixture 和有效本地会话而停止。
+- 尚需解决 NSIS 大包限制、提供真实导出 fixture，并在独立干净 Windows 11 x64 机器上执行验收；完成前不能称为发布包。
 
 ## 7. 下一步执行顺序
 

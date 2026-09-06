@@ -34,7 +34,13 @@ verified SDK location; macOS and CI must set it explicitly.
 
 pnpm keeps downloaded package data under `desktop/.cache/pnpm-store/` during
 source builds and runtime assembly. Set `PENPOT_PNPM_STORE` only when a shared
-CI cache must use another persistent path.
+CI cache must use another persistent path. Runtime assembly reuses that store
+and downloads any missing locked packages during the build. pnpm's
+machine-local state is under `desktop/.cache/pnpm-state/`; override it with
+`PENPOT_PNPM_STATE`.
+Corepack uses
+`desktop/.cache/corepack/`; set `PENPOT_COREPACK_HOME` when CI provides that
+cache elsewhere.
 Clojure uses `desktop/.cache/m2/`, `desktop/.cache/clojure-config/`, and
 `desktop/.cache/clojure-cache/` for the same reason. Git dependencies use
 `desktop/.cache/gitlibs/`. Existing `CLJ_CONFIG`, `CLJ_CACHE`, and `GITLIBS`
@@ -49,6 +55,35 @@ node packaging/verify-shared-artifacts.mjs target/shared-artifacts/2.17.0-deskto
 
 Pass two shared artifact roots to the second command to require identical
 manifests from two clean builds.
+
+### Windows 11 x64 packaging
+
+Windows packaging runs natively and does not use Docker or WSL. Visual Studio
+2022 C++ build tools are the only system build prerequisite. The preparation
+step downloads checksum-pinned archives, builds Garnet as a self-contained
+Windows application, builds the WOFF command-line tools, and keeps every input
+in the persistent cache:
+
+```powershell
+pnpm run prepare:windows
+$env:PENPOT_SHARED_ARTIFACT_ROOT = "D:\artifacts\shared-artifacts-repro-a"
+pnpm run assemble:windows
+pnpm run package:windows
+```
+
+The NSIS package uses current-user install mode and embeds the verified
+WebView2 offline installer. `package:windows` creates an unsigned engineering
+installer by default and marks its provenance as not release-qualified. Set
+`PENPOT_RELEASE_QUALIFY=1` only after Authenticode signing; the evidence step
+then rejects a missing or invalid signature. It writes SHA-256 checksums,
+license inventory, CycloneDX SBOM, and provenance under
+`target/release-evidence/x86_64-pc-windows-msvc/`.
+
+Run `acceptance/windows-clean-machine.ps1` on a clean Windows 11 x64 machine.
+The harness installs without network access, runs the bundled compatibility
+probe, checks Credential Manager and owner-only ACLs, watches all child TCP
+connections for non-loopback traffic, tests upgrade/failure paths when given,
+uninstalls, and confirms that user data remains.
 
 Windows build tools that need prefix arguments can be supplied without a shell
 through JSON arrays. For example, set `PENPOT_BUILD_CLOJURE_COMMAND` to a

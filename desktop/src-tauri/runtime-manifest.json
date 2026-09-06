@@ -78,10 +78,10 @@
           "requiredFiles": [
             "media-processor/index.js",
             "media-processor/package.json",
-            "tools/fontforge.exe",
-            "tools/sfnt2woff.exe",
-            "tools/woff2sfnt.exe",
-            "tools/woff2_decompress.exe"
+            "tools/fontforge/bin/fontforge.exe",
+            "tools/woff/sfnt2woff.exe",
+            "tools/woff/woff2sfnt.exe",
+            "tools/woff2/woff2_decompress.exe"
           ]
         },
         {
@@ -102,8 +102,8 @@
             "frontend/render.html",
             "frontend/js/render-wasm.wasm",
             "chromium/chrome.exe",
-            "tools/magick.exe",
-            "tools/potrace.exe"
+            "tools/imagemagick/magick.exe",
+            "tools/potrace/potrace.exe"
           ],
           "dependsOn": ["backend", "cache"]
         }

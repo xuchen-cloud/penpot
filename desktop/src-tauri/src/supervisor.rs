@@ -525,6 +525,23 @@ mod tests {
         fs::write(env::var("PENPOT_DESKTOP_STOP_MARKER").unwrap(), "stop").unwrap();
     }
 
+    #[cfg(windows)]
+    #[test]
+    #[ignore = "runs only as a supervised descendant fixture"]
+    fn fixture_descendant() {
+        let mut child = std::process::Command::new(env::current_exe().unwrap())
+            .args(["--exact", "supervisor::tests::fixture_process", "--ignored"])
+            .env("PENPOT_DESKTOP_FIXTURE", "descendant")
+            .spawn()
+            .unwrap();
+        fs::write(
+            env::var("PENPOT_DESKTOP_DESCENDANT_PID").unwrap(),
+            child.id().to_string(),
+        )
+        .unwrap();
+        child.wait().unwrap();
+    }
+
     #[tokio::test]
     async fn starts_reports_and_stops_a_process() {
         let temporary = tempfile::tempdir().unwrap();
@@ -606,6 +623,44 @@ mod tests {
         supervisor.stop_all().await.unwrap();
 
         assert!(marker.is_file());
+    }
+
+    #[cfg(windows)]
+    #[tokio::test]
+    async fn stopping_a_job_terminates_descendants() {
+        let temporary = tempfile::tempdir().unwrap();
+        let marker = temporary.path().join("descendant.pid");
+        let mut spec = fixture_spec("backend", "parent", temporary.path());
+        spec.command.arguments[1] = "supervisor::tests::fixture_descendant".to_owned();
+        spec.command.environment.insert(
+            "PENPOT_DESKTOP_DESCENDANT_PID".to_owned(),
+            marker.display().to_string(),
+        );
+        let mut supervisor = ProcessSupervisor::start_all(&[spec], &temporary.path().join("logs"))
+            .await
+            .unwrap();
+        for _ in 0..100 {
+            if marker.is_file() {
+                break;
+            }
+            thread::sleep(Duration::from_millis(20));
+        }
+        let pid = fs::read_to_string(&marker).unwrap().trim().to_owned();
+
+        supervisor.stop_all().await.unwrap();
+
+        let status = std::process::Command::new("powershell.exe")
+            .args([
+                "-NoProfile",
+                "-Command",
+                &format!("for ($i=0; $i -lt 20; $i++) {{ if (-not (Get-Process -Id {pid} -ErrorAction SilentlyContinue)) {{ exit 0 }}; Start-Sleep -Milliseconds 100 }}; exit 1"),
+            ])
+            .status()
+            .unwrap();
+        assert!(
+            status.success(),
+            "descendant process {pid} survived its Job Object"
+        );
     }
 
     #[tokio::test]

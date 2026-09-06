@@ -495,7 +495,15 @@ impl PlanRunner {
         let environment: BTreeMap<_, _> = definition
             .environment
             .iter()
-            .map(|(key, value)| Ok((key.clone(), self.expand(value)?)))
+            .map(|(key, value)| {
+                let expanded = self.expand(value)?;
+                let expanded = if key == "PENPOT_OBJECTS_STORAGE_FS_DIRECTORY" {
+                    expanded.replace('\\', "/")
+                } else {
+                    expanded
+                };
+                Ok((key.clone(), expanded))
+            })
             .collect::<Result<_>>()?;
         let mut command = Command::new(&executable);
         command
@@ -505,7 +513,30 @@ impl PlanRunner {
             .env("PATH", runtime_path_environment(&self.runtime_root))
             .current_dir(&working_directory)
             .stdin(Stdio::null());
-        for name in ["SystemRoot", "TEMP", "TMP", "TMPDIR"] {
+        for name in [
+            "ALLUSERSPROFILE",
+            "APPDATA",
+            "COMSPEC",
+            "CommonProgramFiles",
+            "CommonProgramFiles(x86)",
+            "CommonProgramW6432",
+            "HOMEDRIVE",
+            "HOMEPATH",
+            "LOCALAPPDATA",
+            "OS",
+            "PATHEXT",
+            "ProgramData",
+            "ProgramFiles",
+            "ProgramFiles(x86)",
+            "ProgramW6432",
+            "SystemDrive",
+            "SystemRoot",
+            "TEMP",
+            "TMP",
+            "TMPDIR",
+            "USERPROFILE",
+            "windir",
+        ] {
             if let Some(value) = std::env::var_os(name) {
                 command.env(name, value);
             }

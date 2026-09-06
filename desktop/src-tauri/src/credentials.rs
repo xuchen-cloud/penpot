@@ -59,6 +59,29 @@ impl SystemCredentialStore {
         keyring::Entry::new(SERVICE, &format!("{}/{name}", self.installation_id))
             .map_err(|error| DesktopError::Credential(error.to_string()))
     }
+
+    pub fn verify_roundtrip(&self) -> Result<()> {
+        let name = format!("compatibility-{}", Uuid::new_v4().simple());
+        let value = random_secret();
+        let entry = self.entry(&name)?;
+        entry
+            .set_password(&value)
+            .map_err(|error| DesktopError::Credential(error.to_string()))?;
+        let loaded = entry
+            .get_password()
+            .map_err(|error| DesktopError::Credential(error.to_string()));
+        let deleted = entry
+            .delete_credential()
+            .map_err(|error| DesktopError::Credential(error.to_string()));
+        let loaded = loaded?;
+        deleted?;
+        if loaded != value {
+            return Err(DesktopError::Credential(
+                "credential manager roundtrip returned a different value".to_owned(),
+            ));
+        }
+        Ok(())
+    }
 }
 
 impl CredentialStore for SystemCredentialStore {
