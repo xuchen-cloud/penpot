@@ -68,6 +68,20 @@ fn platform_instance_root(base: &std::path::Path, os: &str) -> Result<std::path:
     }
 }
 
+fn platform_runtime_root(path: std::path::PathBuf, os: &str) -> std::path::PathBuf {
+    if os != "windows" {
+        return path;
+    }
+    let value = path.to_string_lossy();
+    if let Some(path) = value.strip_prefix(r"\\?\UNC\") {
+        return std::path::PathBuf::from(format!(r"\\{path}"));
+    }
+    if let Some(path) = value.strip_prefix(r"\\?\") {
+        return std::path::PathBuf::from(path);
+    }
+    path
+}
+
 fn manifest() -> Result<RuntimeManifest> {
     let manifest: RuntimeManifest =
         serde_json::from_str(RUNTIME_MANIFEST).map_err(|source| DesktopError::InvalidJson {
@@ -112,12 +126,14 @@ fn status(app: &AppHandle) -> Result<RuntimeStatus> {
 
 fn verify_runtime(app: &AppHandle) -> Result<(RuntimeManifest, String, std::path::PathBuf)> {
     let target = current_target()?.to_owned();
-    let resource_root = app
-        .path()
-        .resource_dir()
-        .map_err(|_| DesktopError::MissingDataDirectory)?
-        .join("runtime")
-        .join(&target);
+    let resource_root = platform_runtime_root(
+        app.path()
+            .resource_dir()
+            .map_err(|_| DesktopError::MissingDataDirectory)?
+            .join("runtime")
+            .join(&target),
+        std::env::consts::OS,
+    );
     let manifest = manifest()?;
     manifest.verify_bundle(&target, &resource_root)?;
     RuntimeLock::load(&resource_root.join("runtime-lock.json"))?.verify(
@@ -323,5 +339,40 @@ mod tests {
             root,
             std::path::Path::new("/LocalAppData/xuchen-cloud/Penpot Desktop")
         );
+    }
+
+    #[test]
+    fn strips_windows_verbatim_prefix_from_the_runtime_root() {
+        let root = platform_runtime_root(
+            std::path::PathBuf::from(
+                r"\\?\D:\Program Files\Penpot Desktop\runtime\x86_64-pc-windows-msvc",
+            ),
+            "windows",
+        );
+
+        assert_eq!(
+            root,
+            std::path::Path::new(r"D:\Program Files\Penpot Desktop\runtime\x86_64-pc-windows-msvc")
+        );
+    }
+
+    #[test]
+    fn converts_windows_verbatim_unc_runtime_roots() {
+        let root = platform_runtime_root(
+            std::path::PathBuf::from(r"\\?\UNC\server\share\Penpot Desktop\runtime"),
+            "windows",
+        );
+
+        assert_eq!(
+            root,
+            std::path::Path::new(r"\\server\share\Penpot Desktop\runtime")
+        );
+    }
+
+    #[test]
+    fn leaves_non_windows_runtime_roots_unchanged() {
+        let root = std::path::PathBuf::from("/Applications/Penpot Desktop.app/Contents/Resources");
+
+        assert_eq!(platform_runtime_root(root.clone(), "macos"), root);
     }
 }
