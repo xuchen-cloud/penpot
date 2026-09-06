@@ -8,6 +8,7 @@ import test from "node:test";
 import { verifySharedArtifacts } from "./shared-artifacts.mjs";
 import {
   describeGitSource,
+  promoteStagingDirectory,
   stageSharedArtifacts,
 } from "./stage-shared-artifacts.mjs";
 
@@ -64,6 +65,39 @@ async function fakeRepository(t) {
   );
   return root;
 }
+
+test("retries transient Windows directory promotion errors", async () => {
+  const delays = [];
+  let calls = 0;
+  await promoteStagingDirectory("staging", "output", {
+    initialDelayMs: 25,
+    renameOperation: async () => {
+      calls += 1;
+      if (calls < 3) throw Object.assign(new Error("busy"), { code: "EPERM" });
+    },
+    wait: async (milliseconds) => delays.push(milliseconds),
+  });
+
+  assert.equal(calls, 3);
+  assert.deepEqual(delays, [25, 50]);
+});
+
+test("does not retry non-transient directory promotion errors", async () => {
+  const failure = Object.assign(new Error("missing"), { code: "ENOENT" });
+  let calls = 0;
+
+  await assert.rejects(
+    promoteStagingDirectory("staging", "output", {
+      renameOperation: async () => {
+        calls += 1;
+        throw failure;
+      },
+      wait: async () => assert.fail("non-transient errors must not wait"),
+    }),
+    failure,
+  );
+  assert.equal(calls, 1);
+});
 
 test("stages each shared output under one non-overlapping component", async (t) => {
   const repo = await fakeRepository(t);

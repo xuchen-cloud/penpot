@@ -102,6 +102,24 @@ try {
     );
   }
   invokeClojure(["-Sdescribe"], repo);
+  run(
+    "rustup",
+    ["toolchain", "install", rustToolchain, "--profile", "minimal"],
+    repo,
+    env,
+  );
+  run(
+    "rustup",
+    [
+      "target",
+      "add",
+      "--toolchain",
+      rustToolchain,
+      "wasm32-unknown-emscripten",
+    ],
+    repo,
+    env,
+  );
   run("rustc", ["+" + rustToolchain, "--version"], repo, env);
   invokeClojure(["-T:build", "compile"], join(repo, "common"));
   await mkdir(join(repo, "backend/target/classes"), { recursive: true });

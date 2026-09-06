@@ -12,6 +12,37 @@ import {
 } from "./shared-artifacts.mjs";
 
 const REPOSITORY = "https://github.com/xuchen-cloud/penpot";
+const TRANSIENT_RENAME_ERRORS = new Set(["EACCES", "EBUSY", "EPERM"]);
+
+function delay(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+export async function promoteStagingDirectory(
+  source,
+  destination,
+  {
+    attempts = 6,
+    initialDelayMs = 50,
+    renameOperation = rename,
+    wait = delay,
+  } = {},
+) {
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      await renameOperation(source, destination);
+      return;
+    } catch (error) {
+      if (
+        !TRANSIENT_RENAME_ERRORS.has(error?.code) ||
+        attempt === attempts - 1
+      ) {
+        throw error;
+      }
+      await wait(initialDelayMs * 2 ** attempt);
+    }
+  }
+}
 
 async function required(path, label) {
   try {
@@ -243,7 +274,7 @@ export async function stageSharedArtifacts({
     });
     await writeSharedArtifactManifest(staging, manifest);
     await verifySharedArtifacts(staging, manifest);
-    await rename(staging, output);
+    await promoteStagingDirectory(staging, output);
     return output;
   } catch (error) {
     await rm(staging, { recursive: true, force: true });
