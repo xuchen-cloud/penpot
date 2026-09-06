@@ -2,18 +2,22 @@
 
 ## HARD RULES (always apply — no exceptions)
 
+- **All normal repository changes use a pull request into protected `develop`.**
+  Create a `codex/` topic branch, run focused checks, commit, push the branch,
+  and open a PR. Never merge locally or push directly to `develop` during
+  normal work. This includes small and low-impact changes; use a small PR with
+  focused checks instead of bypassing review.
 - **After completing development on a feature branch, push it to the verified
-  user-owned remote by default.** Skip the push only when the user explicitly
-  says not to push. Before every allowed push, run `git remote get-url origin`,
-  confirm the owner and repository, confirm the intended branch and clean
-  worktrees, and use an explicit remote and refspec. Never force-push or modify
-  any remote URL.
-- **For a small, low-impact change, a user-approved shortcut is allowed.**
-  After explicitly confirming both the low-impact assessment and the shortcut,
-  work directly on local `develop`, skip the topic branch and dual-axis review,
-  commit the focused change, and push local `develop` to `origin/develop`.
-  This shortcut still requires the relevant focused checks and all remote and
-  upstream safeguards above.
+  user-owned remote and open or update its PR by default.** Skip the push only
+  when the user explicitly says not to push. Before every allowed push, run
+  `git remote get-url origin`, confirm the owner and repository, confirm the
+  intended branch and clean worktrees, and use an explicit remote and refspec.
+  Never force-push or modify any remote URL.
+- **Direct pushes to `develop` are emergency-only.** They require the user to
+  state the emergency and explicitly approve the protected-branch bypass and
+  the exact `origin/develop` refspec. Run focused checks first and record the
+  reason after service is restored. Never treat size or urgency alone as an
+  emergency.
 - **Never perform any operation against the upstream `penpot/penpot`
   repository. No exceptions.** Do not fetch, pull, push, clone, list refs, open
   or search its issues, pull requests, advisories, releases, commits, or files,
@@ -39,23 +43,15 @@
   - Before `gh pr create` / `gh pr edit` → `mem:workflow/creating-prs` (title format, body structure, AI note)
   Don't infer format from the title of a previous commit/issue/PR — the memory
   is the source of truth.
-- **Use the branch-review-merge workflow in `mem:workflow/creating-commits` for
-  all repository changes unless the user explicitly asks for a different
-  workflow.** The normal development path is a `codex/` topic branch, tests, a
-  branch commit, and a default push of that feature branch to the verified
-  remote. If the user explicitly says not to push, keep the branch local and
-  carry that opt-out through all later review and fix steps. Do not run the
-  dual-axis review merely to push a feature branch.
-  When the user asks to merge, first run separate Standards and Spec reviews on
-  the remote feature branch against `develop`, fix blocking findings, then
-  merge that feature branch into `develop`. Tests do not replace either review
-  axis. A user request to merge authorizes the local merge. Push the resulting
-  `develop` update only when the request explicitly authorizes that remote
-  destination/refspec, such as `origin/develop`; naming the source feature
-  branch does not authorize pushing the destination. For a small,
-  low-impact change, the user may explicitly approve working directly on local
-  `develop`, skipping the topic branch and both review axes, then pushing the
-  resulting commit to `origin/develop`.
+- **Use the PR workflow in `mem:workflow/creating-commits` for all repository
+  changes.** The normal path is a `codex/` topic branch, focused checks, a
+  signed commit, a push to the verified remote, and a PR into `develop`. Review
+  the PR once with the structured Spec, Standards, and Risk checklist in
+  `mem:workflow/creating-prs`; fix every blocking finding and run the relevant
+  checks locally before merge. Record those results in the PR. GitHub CI does
+  not run automatically. Merge through GitHub with squash merge. Do not create
+  a local merge commit or push a merge result to `develop`. GitHub deletes the
+  remote topic branch after merge.
 
 ## CRITICAL: Read module memories BEFORE writing any code
 
@@ -200,3 +196,8 @@ Triage uses the five default labels: `needs-triage`, `needs-info`, `ready-for-ag
 ### Domain docs
 
 Domain docs use a multi-context layout focused on local deployment, localization, and project-specific extensions; the upstream Penpot core remains the baseline. See `docs/agents/domain.md`.
+
+### Development workflow
+
+The human-readable workflow and required GitHub repository settings live in
+`.github/DEVELOPMENT_WORKFLOW.md`.

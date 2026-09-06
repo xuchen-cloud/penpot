@@ -1,19 +1,46 @@
-### Related Ticket
+**Note:** State whether this PR used AI assistance and name the model when it did.
 
-<!-- Reference the related GitHub/Taiga ticket. -->
+## What
 
-### Summary
+<!-- State the user-visible problem or feature. -->
 
-### Steps to reproduce 
+## Why
 
-### Checklist
+<!-- Explain the cause or motivation. -->
 
-- [ ] Choose the correct target branch; use `develop` by default.
-- [ ] Provide a brief summary of the changes introduced.
-- [ ] Add a detailed explanation of how to reproduce the issue and/or verify the fix, if applicable.
-- [ ] Include screenshots or videos, if applicable.
-- [ ] Add or modify existing integration tests in case of bugs or new features, if applicable.
-- [ ] Refactor any modified SCSS files following the refactor guide.
-- [ ] Check CI passes successfully.
+## How
 
-<!-- For more details, check the contribution guidelines: https://github.com/penpot/penpot/blob/develop/CONTRIBUTING.md -->
+<!-- Summarize the approach and key decisions. -->
+
+## Related work
+
+<!-- Use Closes #123, Relates to #123, or Taiga #123 when applicable. -->
+
+## Structured review
+
+### Spec
+
+- [ ] The change matches the request and acceptance criteria.
+- [ ] User-visible behavior and relevant edge cases are covered.
+
+### Standards
+
+- [ ] The diff is focused and follows the affected module rules.
+- [ ] Relevant tests, lint, format, and docs checks pass.
+- [ ] Every commit follows the 70-character, DCO, and AI trailer policy.
+
+### Risk
+
+- [ ] Security, privacy, data migration, compatibility, and performance risks are addressed or not applicable.
+- [ ] Rollback and residual risk are clear.
+
+## Evidence
+
+<!-- Link test output, screenshots for UI changes, and other verification. -->
+
+## Merge gate
+
+- [ ] The PR commit range passes `scripts/check-commit` locally.
+- [ ] Relevant module checks pass locally and are recorded above.
+- [ ] The structured review is complete with no blocking item.
+- [ ] Use squash merge; GitHub will delete the topic branch.

@@ -5,24 +5,7 @@ defaults:
     shell: bash
 
 on:
-  pull_request:
-    paths:
-      - 'backend/**'
-      - 'common/**'
-
-    types:
-      - opened
-      - synchronize
-      - ready_for_review
-
-  push:
-    branches:
-      - develop
-      - staging
-
-    paths:
-      - 'backend/**'
-      - 'common/**'
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -30,7 +13,6 @@ concurrency:
 
 jobs:
   test-backend:
-    if: ${{ !github.event.pull_request.draft }}
     name: "Backend Tests"
     runs-on: penpot-extended-runner
     container:
