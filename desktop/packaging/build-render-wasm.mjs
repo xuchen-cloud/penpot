@@ -13,11 +13,18 @@ import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { buildEmscriptenEnvironment } from "./emscripten-environment.mjs";
-import { invokeTool, resolveToolCommand } from "./tool-command.mjs";
+import {
+  defaultPnpmCommand,
+  invokeTool,
+  resolveToolCommand,
+} from "./tool-command.mjs";
 import { desktopRoot } from "./verify.mjs";
 
 const repo = resolve(desktopRoot, "..");
 const renderRoot = join(repo, "render-wasm");
+const modulePnpm = JSON.parse(
+  await readFile(join(renderRoot, "package.json"), "utf8"),
+).packageManager.split("+")[0];
 const defaultEmsdkRoot =
   process.platform === "win32" ? "D:\\Program Files\\emsdk" : undefined;
 
@@ -51,6 +58,17 @@ function output(executable, args, cwd, env) {
 function requireVersion(actual, expected, label) {
   if (!actual.includes(expected))
     throw new Error(`${label} does not match ${expected}: ${actual}`);
+}
+
+export function resolveRenderWasmPnpm({
+  env = process.env,
+  platform = process.platform,
+} = {}) {
+  return resolveToolCommand({
+    env,
+    name: "PENPOT_BUILD_PNPM",
+    fallback: defaultPnpmCommand({ env, platform, version: modulePnpm }),
+  });
 }
 
 export function reproducibleRustFlags({ targetRoot, emsdkRoot, baseEnv }) {
@@ -145,11 +163,7 @@ export async function buildRenderWasm(
       join(desktopRoot, ".cache/build/render-wasm", target),
     outputRoot = null,
     version = process.env.VERSION || "2.17.0-desktop.1",
-    pnpm = resolveToolCommand({
-      env: process.env,
-      name: "PENPOT_BUILD_PNPM",
-      fallback: "pnpm",
-    }),
+    pnpm = resolveRenderWasmPnpm(),
   } = {},
 ) {
   const config = await loadRenderWasmConfiguration();

@@ -4,7 +4,18 @@ import test from "node:test";
 import {
   loadRenderWasmConfiguration,
   reproducibleRustFlags,
+  resolveRenderWasmPnpm,
 } from "./build-render-wasm.mjs";
+
+test("uses the pinned Windows pnpm for the frontend worker bundle", () => {
+  assert.deepEqual(
+    resolveRenderWasmPnpm({
+      env: { ComSpec: "cmd.exe" },
+      platform: "win32",
+    }),
+    ["cmd.exe", "/d", "/c", "corepack.cmd", "pnpm@12.0.0"],
+  );
+});
 
 test("pins the supported Render WASM toolchain and both consumers", async () => {
   const config = await loadRenderWasmConfiguration();
