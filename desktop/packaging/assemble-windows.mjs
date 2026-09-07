@@ -6,7 +6,11 @@ import { auditWindowsRuntime } from "./audit-windows-runtime.mjs";
 import { validateFrontendOutput } from "./frontend-artifacts.mjs";
 import { installSharedArtifacts, verifySharedArtifacts } from "./shared-artifacts.mjs";
 import { desktopRoot, run } from "./verify.mjs";
-import { invokeTool, resolveToolCommand } from "./tool-command.mjs";
+import {
+  defaultPnpmCommand,
+  invokeTool,
+  resolveToolCommand,
+} from "./tool-command.mjs";
 import { defaultPreparedRoot, validateWindowsMetadata, WINDOWS_TARGET } from "./windows-runtime.mjs";
 
 const repo = resolve(desktopRoot, "..");
@@ -91,7 +95,14 @@ async function main() {
       NPM_CONFIG_STATE_DIR: pnpmState,
       NPM_CONFIG_STORE_DIR: pnpmStore,
     };
-    const pnpm = resolveToolCommand({ env: pnpmEnv, name: "PENPOT_BUILD_PNPM", fallback: "pnpm" });
+    const modulePnpm = JSON.parse(
+      await readFile(join(repo, "media-processor/package.json"), "utf8"),
+    ).packageManager.split("+")[0];
+    const pnpm = resolveToolCommand({
+      env: pnpmEnv,
+      name: "PENPOT_BUILD_PNPM",
+      fallback: defaultPnpmCommand({ env: pnpmEnv, version: modulePnpm }),
+    });
     for (const module of ["media-processor", "exporter"]) {
       const source = join(repo, module);
       const destination = join(staging, module);

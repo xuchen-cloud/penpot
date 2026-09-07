@@ -7,6 +7,7 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 import {
+  defaultPnpmCommand,
   encodePowerShellFileArguments,
   invokeTool,
   resolveToolCommand,
@@ -26,6 +27,23 @@ test("keeps a portable executable fallback", () => {
       fallback: "pnpm",
     }),
     ["pnpm"],
+  );
+});
+
+test("runs the pinned pnpm through Corepack on Windows", () => {
+  assert.deepEqual(
+    defaultPnpmCommand({
+      env: { ComSpec: "C:\\Windows\\System32\\cmd.exe" },
+      platform: "win32",
+      version: "pnpm@12.0.0",
+    }),
+    [
+      "C:\\Windows\\System32\\cmd.exe",
+      "/d",
+      "/c",
+      "corepack.cmd",
+      "pnpm@12.0.0",
+    ],
   );
 });
 

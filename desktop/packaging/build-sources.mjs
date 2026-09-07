@@ -8,6 +8,7 @@ import {
   validateFrontendOutput,
 } from "./frontend-artifacts.mjs";
 import {
+  defaultPnpmCommand,
   encodePowerShellFileArguments,
   invokeTool,
   resolveToolCommand,
@@ -63,10 +64,13 @@ const clojure = resolveToolCommand({
   name: "PENPOT_BUILD_CLOJURE",
   fallback: defaultClojure,
 });
+const modulePnpm = JSON.parse(
+  await readFile(join(repo, "frontend/package.json"), "utf8"),
+).packageManager.split("+")[0];
 const pnpm = resolveToolCommand({
   env,
   name: "PENPOT_BUILD_PNPM",
-  fallback: "pnpm",
+  fallback: defaultPnpmCommand({ env, version: modulePnpm }),
 });
 const encodeClojureArguments =
   process.platform === "win32" &&
