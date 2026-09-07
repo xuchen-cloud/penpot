@@ -5,6 +5,7 @@ import { dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { desktopRoot } from "./verify.mjs";
+import { validateFrontendOutput } from "./frontend-artifacts.mjs";
 import {
   createSharedArtifactManifest,
   verifySharedArtifacts,
@@ -148,6 +149,7 @@ export async function stageSharedArtifacts({
   const staging = `${output}.staging-${randomUUID()}`;
   await mkdir(staging);
   try {
+    await validateFrontendOutput(join(repo, "frontend/resources/public"));
     await copyRequired(
       join(repo, "backend/target/penpot.jar"),
       join(staging, "backend/penpot.jar"),

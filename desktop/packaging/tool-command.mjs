@@ -4,6 +4,17 @@ function requiredString(value, label) {
   return value;
 }
 
+export function defaultPnpmCommand({
+  env = process.env,
+  platform = process.platform,
+  version,
+}) {
+  const pinned = requiredString(version, "pnpm version");
+  return platform === "win32"
+    ? [env.ComSpec ?? "cmd.exe", "/d", "/c", "corepack.cmd", pinned]
+    : ["corepack", pinned];
+}
+
 export function resolveToolCommand({ env = process.env, name, fallback }) {
   const commandName = requiredString(name, "Tool command name");
   const configured = env[`${commandName}_COMMAND`];

@@ -1,12 +1,13 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 import {
+  defaultPnpmCommand,
   encodePowerShellFileArguments,
   invokeTool,
   resolveToolCommand,
@@ -27,6 +28,46 @@ test("keeps a portable executable fallback", () => {
     }),
     ["pnpm"],
   );
+});
+
+test("runs the pinned pnpm through Corepack on Windows", () => {
+  assert.deepEqual(
+    defaultPnpmCommand({
+      env: { ComSpec: "C:\\Windows\\System32\\cmd.exe" },
+      platform: "win32",
+      version: "pnpm@12.0.0",
+    }),
+    [
+      "C:\\Windows\\System32\\cmd.exe",
+      "/d",
+      "/c",
+      "corepack.cmd",
+      "pnpm@12.0.0",
+    ],
+  );
+});
+
+test("Windows packaging entrypoints never launch a bare pnpm command", async () => {
+  const packagingFiles = (await readdir(packagingRoot))
+    .filter(
+      (name) =>
+        name.endsWith(".mjs") &&
+        !name.endsWith(".test.mjs") &&
+        !name.includes("macos") &&
+        name !== "relocate-macos.mjs",
+    )
+    .map((name) => join(packagingRoot, name));
+  const entrypoints = [
+    ...packagingFiles,
+    join(packagingRoot, "../scripts/prepare-web-to-penpot.mjs"),
+  ];
+
+  for (const path of entrypoints) {
+    const source = await readFile(path, "utf8");
+    assert.doesNotMatch(source, /fallback:\s*["']pnpm["']/);
+    assert.doesNotMatch(source, /spawnSync\(\s*["']pnpm["']/);
+    assert.doesNotMatch(source, /\brun\(\s*["']pnpm["']/);
+  }
 });
 
 test("supports a shell-free fallback with prefix arguments", () => {

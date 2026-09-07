@@ -251,12 +251,17 @@ fn backend(component: &RuntimeComponent, config: &LocalStackConfig<'_>) -> Resul
         runtime_file(config, &component.executable),
         vec![
             "--enable-preview".to_owned(),
+            "--enable-native-access=ALL-UNNAMED".to_owned(),
             "-jar".to_owned(),
             display(&config.runtime_root.join("backend/penpot.jar")),
             "-m".to_owned(),
             "app.main".to_owned(),
         ],
         BTreeMap::from([
+            (
+                "JAVA_HOME".to_owned(),
+                display(&config.runtime_root.join("jre")),
+            ),
             (
                 "PENPOT_DATABASE_URI".to_owned(),
                 format!("postgresql://{LOOPBACK}:{}/penpot", config.ports.postgres),
@@ -397,12 +402,19 @@ fn display(path: &Path) -> String {
 }
 
 fn bundled_tool_path(config: &LocalStackConfig<'_>) -> String {
-    let directory = if config.target == "x86_64-pc-windows-msvc" {
-        "tools"
+    if config.target == "x86_64-pc-windows-msvc" {
+        [
+            "tools/imagemagick",
+            "tools/potrace",
+            "tools/fontforge/bin",
+            "tools/woff",
+            "tools/woff2",
+        ]
+        .map(|directory| display(&config.runtime_root.join(directory)))
+        .join(";")
     } else {
-        "tools/bin"
-    };
-    display(&config.runtime_root.join(directory))
+        display(&config.runtime_root.join("tools/bin"))
+    }
 }
 
 fn file_stem(path: &Path) -> Option<&str> {
@@ -560,6 +572,17 @@ mod tests {
             backend.command.environment["PENPOT_REDIS_URI"],
             "redis://:cache%3A%2F%3F%23%20secret@127.0.0.1:41002/0"
         );
+        assert!(
+            backend
+                .command
+                .arguments
+                .iter()
+                .any(|argument| argument == "--enable-native-access=ALL-UNNAMED")
+        );
+        assert_eq!(
+            backend.command.environment["JAVA_HOME"],
+            runtime_root.join("jre").to_string_lossy()
+        );
     }
 
     #[test]
@@ -587,6 +610,13 @@ mod tests {
         assert!(specs[1].command.arguments.windows(2).any(|values| {
             values[0] == "--config-import-path" && values[1].ends_with("garnet.json")
         }));
+        let media_path = specs[2].command.environment.get("PATH").unwrap();
+        assert_eq!(media_path.split(';').count(), 5);
+        assert!(media_path.contains("tools/imagemagick"));
+        assert!(media_path.contains("tools/potrace"));
+        assert!(media_path.contains("tools/fontforge/bin"));
+        assert!(media_path.contains("tools/woff"));
+        assert!(media_path.contains("tools/woff2"));
         assert!(
             specs[1]
                 .command

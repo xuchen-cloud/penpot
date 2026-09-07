@@ -1,4 +1,5 @@
 use std::fs::{self, OpenOptions};
+use std::future::Future;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
@@ -55,8 +56,8 @@ impl DatabaseBootstrap<'_> {
         remove_result
     }
 
-    pub async fn create_application_database(&self) -> Result<()> {
-        if self.database_exists().await? {
+    pub async fn create_application_database(&self, timeout: Duration) -> Result<()> {
+        if self.wait_until_ready(timeout).await? {
             return Ok(());
         }
         let mut command = self.postgres_command("createdb");
@@ -72,6 +73,13 @@ impl DatabaseBootstrap<'_> {
             ])
             .env("PGPASSWORD", self.password);
         run_checked(command, "create the Penpot database").await
+    }
+
+    pub async fn wait_until_ready(&self, timeout: Duration) -> Result<bool> {
+        wait_for_database_probe(timeout, Duration::from_millis(100), || {
+            self.database_exists()
+        })
+        .await
     }
 
     async fn database_exists(&self) -> Result<bool> {
@@ -92,15 +100,21 @@ impl DatabaseBootstrap<'_> {
                 "SELECT 1 FROM pg_database WHERE datname = 'penpot'",
             ])
             .env("PGPASSWORD", self.password)
-            .stdin(Stdio::null())
-            .stderr(Stdio::null());
+            .stdin(Stdio::null());
         let output = command.output().await.map_err(|error| {
             DesktopError::Process(format!("could not inspect the Penpot database: {error}"))
         })?;
         if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            let detail = stderr.trim();
             return Err(DesktopError::Process(format!(
-                "could not inspect the Penpot database: psql exited with {}",
-                output.status
+                "could not inspect the Penpot database: psql exited with {}{}",
+                output.status,
+                if detail.is_empty() {
+                    String::new()
+                } else {
+                    format!(": {detail}")
+                }
             )));
         }
         Ok(String::from_utf8_lossy(&output.stdout).trim() == "1")
@@ -316,6 +330,31 @@ fn valkey_quote(path: &Path) -> Result<String> {
     ))
 }
 
+async fn wait_for_database_probe<F, Fut>(
+    timeout: Duration,
+    interval: Duration,
+    mut probe: F,
+) -> Result<bool>
+where
+    F: FnMut() -> Fut,
+    Fut: Future<Output = Result<bool>>,
+{
+    let started = Instant::now();
+    loop {
+        let last_error = match probe().await {
+            Ok(exists) => return Ok(exists),
+            Err(error) => error.to_string(),
+        };
+        if started.elapsed() >= timeout {
+            return Err(DesktopError::Process(format!(
+                "database did not accept queries within {} seconds; last probe: {last_error}",
+                timeout.as_secs(),
+            )));
+        }
+        sleep(interval).await;
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -360,6 +399,52 @@ mod tests {
             .await
             .unwrap_err();
         assert!(error.to_string().contains("fixture did not become ready"));
+    }
+
+    #[tokio::test]
+    async fn retries_database_queries_during_recovery() {
+        let mut attempts = 0;
+        let ready =
+            wait_for_database_probe(Duration::from_secs(1), Duration::from_millis(1), || {
+                attempts += 1;
+                async move {
+                    if attempts < 3 {
+                        Err(DesktopError::Process(
+                            "psql exited with exit code: 2 (the database system is starting up)"
+                                .to_owned(),
+                        ))
+                    } else {
+                        Ok(true)
+                    }
+                }
+            })
+            .await
+            .unwrap();
+
+        assert!(ready);
+        assert_eq!(attempts, 3);
+    }
+
+    #[tokio::test]
+    async fn reports_the_last_database_probe_error_after_timeout() {
+        let error = wait_for_database_probe(
+            Duration::from_millis(1),
+            Duration::from_millis(1),
+            || async {
+                Err(DesktopError::Process(
+                    "psql exited with exit code: 2 (the database system is starting up)".to_owned(),
+                ))
+            },
+        )
+        .await
+        .unwrap_err();
+
+        assert!(
+            error
+                .to_string()
+                .contains("database did not accept queries")
+        );
+        assert!(error.to_string().contains("starting up"));
     }
 
     #[tokio::test]

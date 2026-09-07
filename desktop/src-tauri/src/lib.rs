@@ -12,6 +12,8 @@ pub mod runtime;
 pub mod runtime_lock;
 pub mod runtime_manifest;
 pub mod supervisor;
+#[cfg(windows)]
+pub mod windows_security;
 
 use std::sync::atomic::{AtomicBool, Ordering};
 

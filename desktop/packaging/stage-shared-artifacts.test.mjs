@@ -33,7 +33,13 @@ async function fakeRepository(t) {
   }
   await write(join(root, "backend/target/penpot.jar"), "backend");
   await write(join(root, "frontend/resources/public/index.html"), "frontend");
+  await write(join(root, "frontend/resources/public/css/main.css"), "current css");
   await write(join(root, "frontend/resources/public/js/app.js"), "app");
+  await write(join(root, "frontend/resources/public/js/main.js"), "main");
+  await write(
+    join(root, "frontend/resources/public/js/worker/main.js"),
+    "worker",
+  );
   await write(
     join(root, "frontend/resources/public/js/render-wasm.js"),
     "frontend wasm js",
@@ -152,6 +158,25 @@ test("does not replace an existing shared artifact output", async (t) => {
     /output already exists/,
   );
   assert.equal(await readFile(join(output, "owned.txt"), "utf8"), "keep");
+});
+
+test("rejects a nested stale frontend build", async (t) => {
+  const repo = await fakeRepository(t);
+  const output = join(repo, "desktop-output/shared");
+  await write(
+    join(repo, "frontend/resources/public/resources/public/css/main.css"),
+    "stale css",
+  );
+
+  await assert.rejects(
+    stageSharedArtifacts({
+      repo,
+      outputRoot: output,
+      sourceRevision: "0123456789abcdef0123456789abcdef01234567",
+      toolchainsPath: join(repo, "toolchains.json"),
+    }),
+    /nested resources\/public/,
+  );
 });
 
 test("records a stable digest for dirty tracked and untracked source", async (t) => {

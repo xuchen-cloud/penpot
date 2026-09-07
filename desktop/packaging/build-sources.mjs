@@ -4,6 +4,11 @@ import { join, resolve } from "node:path";
 import { desktopRoot, run } from "./verify.mjs";
 import { stageSharedArtifacts } from "./stage-shared-artifacts.mjs";
 import {
+  resetFrontendOutput,
+  validateFrontendOutput,
+} from "./frontend-artifacts.mjs";
+import {
+  defaultPnpmCommand,
   encodePowerShellFileArguments,
   invokeTool,
   resolveToolCommand,
@@ -18,6 +23,8 @@ const baseEnv = Object.fromEntries(
 const defaultClojureConfig = join(desktopRoot, ".cache/clojure-config");
 const pnpmStore =
   process.env.PENPOT_PNPM_STORE || join(desktopRoot, ".cache/pnpm-store");
+const pnpmState =
+  process.env.PENPOT_PNPM_STATE || join(desktopRoot, ".cache/pnpm-state");
 const sourceDateEpoch = execFileSync(
   "git",
   ["show", "-s", "--format=%ct", "HEAD"],
@@ -36,6 +43,7 @@ const env = {
   GITLIBS: process.env.GITLIBS || join(desktopRoot, ".cache/gitlibs"),
   NODE_ENV: "production",
   PENPOT_PNPM_STORE: pnpmStore,
+  PENPOT_PNPM_STATE: pnpmState,
   SOURCE_DATE_EPOCH: sourceDateEpoch,
   VERSION: version,
   VERSION_TAG: `${version}-${sourceDateEpoch}`,
@@ -56,10 +64,13 @@ const clojure = resolveToolCommand({
   name: "PENPOT_BUILD_CLOJURE",
   fallback: defaultClojure,
 });
+const modulePnpm = JSON.parse(
+  await readFile(join(repo, "frontend/package.json"), "utf8"),
+).packageManager.split("+")[0];
 const pnpm = resolveToolCommand({
   env,
   name: "PENPOT_BUILD_PNPM",
-  fallback: "pnpm",
+  fallback: defaultPnpmCommand({ env, version: modulePnpm }),
 });
 const encodeClojureArguments =
   process.platform === "win32" &&
@@ -81,7 +92,7 @@ function invokeClojure(args, cwd) {
 }
 
 function invokePnpm(args, cwd) {
-  return invokeTool(run, pnpm, ["--store-dir", pnpmStore, ...args], cwd, env);
+  return invokeTool(run, pnpm, ["--store-dir", pnpmStore, "--state-dir", pnpmState, ...args], cwd, env);
 }
 
 try {
@@ -138,6 +149,7 @@ try {
   }
   invokePnpm(["install", "--frozen-lockfile"], join(repo, "render-wasm"));
   invokePnpm(["run", "build:runtime"], join(repo, "plugins"));
+  await resetFrontendOutput(join(repo, "frontend/resources/public"));
   for (const target of ["frontend", "export"]) {
     const output =
       target === "frontend"
@@ -156,6 +168,7 @@ try {
   );
   invokePnpm(["run", "build:app:libs"], join(repo, "frontend"));
   invokePnpm(["run", "build:app:assets"], join(repo, "frontend"));
+  await validateFrontendOutput(join(repo, "frontend/resources/public"));
   invokeClojure(
     ["-M:dev:shadow-cljs", "release", "main"],
     join(repo, "exporter"),

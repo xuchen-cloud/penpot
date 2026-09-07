@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "target": "x86_64-pc-windows-msvc",
+  "components": [
+    { "id": "postgres", "version": "15.19", "source": "https://www.postgresql.org/", "license": "PostgreSQL", "buildRecipe": "desktop/packaging/assemble-windows.mjs" },
+    { "id": "cache", "version": "1.1.10", "source": "https://github.com/microsoft/garnet", "license": "MIT", "buildRecipe": "desktop/packaging/build-windows-runtime-tools.mjs" },
+    { "id": "media-processor", "version": "1.0.0", "source": "https://github.com/xuchen-cloud/penpot", "license": "MPL-2.0", "buildRecipe": "media-processor/esbuild.config.mjs" },
+    { "id": "backend", "version": "2.17.0-desktop.1", "source": "https://github.com/xuchen-cloud/penpot", "license": "MPL-2.0", "buildRecipe": "backend/build.clj" },
+    { "id": "exporter", "version": "1.0.0", "source": "https://github.com/xuchen-cloud/penpot", "license": "MPL-2.0", "buildRecipe": "exporter/shadow-cljs.edn" }
+  ],
+  "sources": [
+    {
+      "id": "sevenzip", "version": "26.03", "source": "https://github.com/ip7z/7zip/releases/download/26.03/7zr.exe", "license": "LGPL-2.1-or-later WITH unRAR-restriction", "sha256": "ad4c82fadcbdf93c03b4fc440f300509c7d60c5c2f4d183e35d9d70d6957037d", "buildRecipe": "download-only preparation tool",
+      "windows": { "format": "file", "destination": "sevenzip", "requiredFiles": ["7zr.exe"] }
+    },
+    {
+      "id": "innounp", "version": "2.2.11", "source": "https://github.com/jrathlev/InnoUnpacker-Windows-GUI/releases/download/oi_2_2_11/innounp-2.zip", "license": "GPL-3.0-or-later", "sha256": "851772538a041229102ad9964542d49dc00c74002e3091a70469c079ae368f52", "buildRecipe": "download-only preparation tool",
+      "windows": { "format": "archive", "destination": "innounp", "requiredFiles": ["innounp.exe"] }
+    },
+    {
+      "id": "postgresql", "version": "15.19", "source": "https://get.enterprisedb.com/postgresql/postgresql-15.19-1-windows-x64-binaries.zip", "license": "PostgreSQL", "sha256": "cc54e2d349f48c7743ad0c509b755ea565ff04bb5c5e71745d114074cab0c453", "buildRecipe": "EDB Windows binary archive",
+      "windows": { "format": "archive", "destination": "postgres", "stripPrefix": "pgsql", "requiredFiles": ["bin/postgres.exe", "bin/initdb.exe", "bin/pg_ctl.exe", "bin/psql.exe"], "runtimePath": "postgres" }
+    },
+    {
+      "id": "dotnet-sdk", "version": "10.0.203", "source": "https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.203/dotnet-sdk-10.0.203-win-x64.zip", "license": "MIT", "sha256": "cec8a6aeb262d61e8f23eb22540218eb44b6e510920f3dd2fb91080c44532121", "sha512": "41486bb422746154171e0ede7c1d0021605430728e71b83e94368184e8c97802f9cb5151be2cd1285936b11e452ddc0728ee3766db187d428e50531ac0c2161c", "buildRecipe": "self-contained Garnet build toolchain",
+      "windows": { "format": "archive", "destination": "dotnet-sdk", "requiredFiles": ["dotnet.exe", "sdk/10.0.203/MSBuild.dll"] }
+    },
+    {
+      "id": "garnet-source", "version": "1.1.10", "source": "https://github.com/microsoft/garnet/archive/refs/tags/v1.1.10.tar.gz", "license": "MIT", "sha256": "aa0603a4a473fd0358f6597f237484f96a0ea9d92b1c1efd271dbd6cd94f9387", "buildRecipe": "dotnet publish -c Release -f net8.0 -r win-x64 --self-contained true",
+      "windows": { "format": "archive", "destination": "garnet-source", "stripPrefix": "garnet-1.1.10", "requiredFiles": ["main/GarnetServer/GarnetServer.csproj", "LICENSE"] }
+    },
+    {
+      "id": "node", "version": "24.19.0", "source": "https://nodejs.org/dist/v24.19.0/node-v24.19.0-win-x64.zip", "license": "MIT", "sha256": "57f71ab3652e797d84acddc79c81cc9ff1c6ddb2a1974cdb83f00fee9bff4c73", "buildRecipe": "official Windows x64 archive",
+      "windows": { "format": "archive", "destination": "node", "stripPrefix": "node-v24.19.0-win-x64", "requiredFiles": ["node.exe", "LICENSE"], "runtimePath": "node" }
+    },
+    {
+      "id": "jre", "version": "26.0.2", "source": "https://cdn.azul.com/zulu/bin/zulu26.32.13-ca-fx-jre26.0.2-win_x64.zip", "license": "GPL-2.0-only WITH Classpath-exception-2.0", "sha256": "da67dde3f185a1f0eafc0fdf205cc5c4c28ba9df6596bc350c991ac9a7ffc7d1", "buildRecipe": "Azul Zulu Windows x64 JRE archive",
+      "windows": { "format": "archive", "destination": "jre", "stripPrefix": "zulu26.32.13-ca-fx-jre26.0.2-win_x64", "requiredFiles": ["bin/java.exe", "legal/java.base/LICENSE"], "runtimePath": "jre" }
+    },
+    {
+      "id": "chromium", "version": "151.0.7922.34", "source": "https://cdn.playwright.dev/builds/cft/151.0.7922.34/win64/chrome-win64.zip", "license": "BSD-3-Clause", "sha256": "045621e45a9dd27002c7fc1d8e10fe9f5f71f4cadbf44ec6f397f56f0179725c", "buildRecipe": "Playwright 1.62.1 browser revision 1234",
+      "windows": { "format": "archive", "destination": "chromium", "stripPrefix": "chrome-win64", "requiredFiles": ["chrome.exe", "chrome.dll"], "runtimePath": "chromium" }
+    },
+    {
+      "id": "webview2", "version": "1.3.265.7", "source": "https://msedge.sf.dl.delivery.mp.microsoft.com/filestreamingservice/files/a8f5ad97-0b01-41e5-9245-e8fc9ba9b311/MicrosoftEdgeWebView2RuntimeInstallerX64.exe", "license": "Microsoft Edge WebView2 Runtime Terms", "sha256": "e7fa35755196ad9223596ef021a1ce6799509142eaa40ba35f634026be50b831", "buildRecipe": "Tauri NSIS offlineInstaller payload",
+      "windows": { "format": "file", "destination": "webview2", "requiredFiles": ["MicrosoftEdgeWebView2RuntimeInstallerX64.exe"] }
+    },
+    {
+      "id": "imagemagick", "version": "7.1.2-31", "source": "https://download.imagemagick.org/archive/binaries/ImageMagick-7.1.2-31-portable-Q16-x64.7z", "license": "ImageMagick", "sha256": "33d8b47bb404a6b30c672195795e64a8ce0c807f9bba084e359ff086d6c5d50d", "buildRecipe": "official static portable Windows archive",
+      "windows": { "format": "archive", "extractor": "sevenzip", "destination": "imagemagick", "requiredFiles": ["magick.exe", "LICENSE.txt"], "runtimePath": "tools/imagemagick" }
+    },
+    {
+      "id": "potrace", "version": "1.16", "source": "https://potrace.sourceforge.net/download/1.16/potrace-1.16.win64.zip", "license": "GPL-2.0-or-later", "sha256": "63699f9885b5ed053977fd94452a7bdbb77ee62b77bf28a3f17b2f14b9b9c65d", "buildRecipe": "official Windows x64 archive",
+      "windows": { "format": "archive", "destination": "potrace", "stripPrefix": "potrace-1.16.win64", "requiredFiles": ["potrace.exe", "COPYING"], "runtimePath": "tools/potrace" }
+    },
+    {
+      "id": "fontforge", "version": "2025-10-09", "source": "https://github.com/fontforge/fontforge/releases/download/20251009/FontForge-2025-10-09-Windows-x64.exe", "license": "GPL-3.0-or-later", "sha256": "548523f08834e344bda69abb759e30c0f84a1a5ef9a5e965eb946d86a11118a3", "buildRecipe": "extract official Inno installer with pinned innounp",
+      "windows": { "format": "inno", "destination": "fontforge", "stripPrefix": "{app}", "requiredFiles": ["bin/fontforge.exe", "bin/libfontforge.dll", "bin/libwoff2dec.dll", "bin/libwoff2enc.dll", "LICENSE.txt"], "runtimePath": "tools/fontforge" }
+    },
+    {
+      "id": "woff-source", "version": "c4c8dd2bcca458f5c8aa155f5443220ea0efbaf9", "source": "https://github.com/wget/woff-tools/archive/c4c8dd2bcca458f5c8aa155f5443220ea0efbaf9.tar.gz", "license": "MPL-1.1 OR GPL-2.0-or-later OR LGPL-2.1-or-later", "sha256": "7c58612d6249cd4e9c3e89b164e2e4d74375dd30b701f5123e4ac1d860f3e513", "buildRecipe": "MSVC x64 with pinned zlib",
+      "windows": { "format": "archive", "destination": "woff-source", "stripPrefix": "woff-tools-c4c8dd2bcca458f5c8aa155f5443220ea0efbaf9", "requiredFiles": ["sfnt2woff.c", "woff2sfnt.c", "woff.c", "LICENSE"] }
+    },
+    {
+      "id": "zlib-source", "version": "1.3.1", "source": "https://zlib.net/fossils/zlib-1.3.1.tar.gz", "license": "Zlib", "sha256": "9a93b2b7dfdac77ceba5a558a580e74667dd6fede4585b91eefb60f03b72df23", "buildRecipe": "nmake /f win32/Makefile.msc zlib.lib",
+      "windows": { "format": "archive", "destination": "zlib-source", "stripPrefix": "zlib-1.3.1", "requiredFiles": ["zlib.h", "win32/Makefile.msc"] }
+    },
+    {
+      "id": "woff2-source", "version": "1.0.2", "source": "https://github.com/google/woff2/archive/refs/tags/v1.0.2.tar.gz", "license": "MIT", "sha256": "add272bb09e6384a4833ffca4896350fdb16e0ca22df68c0384773c67a175594", "buildRecipe": "Visual Studio 2022 CMake x64 static runtime",
+      "windows": { "format": "archive", "destination": "woff2-source", "stripPrefix": "woff2-1.0.2", "requiredFiles": ["CMakeLists.txt", "src/woff2_decompress.cc", "LICENSE"] }
+    },
+    {
+      "id": "brotli-source", "version": "5b4769990dc14a2bd466d2599c946c5652cba4b2", "source": "https://github.com/google/brotli/archive/5b4769990dc14a2bd466d2599c946c5652cba4b2.tar.gz", "license": "MIT", "sha256": "3a3c53b56a961ba24d331a5b7882b0bec7f2e3c7be7cf77b9db18271c28151ce", "buildRecipe": "exact Brotli submodule pinned by WOFF2 v1.0.2",
+      "windows": { "format": "archive", "destination": "brotli-source", "stripPrefix": "brotli-5b4769990dc14a2bd466d2599c946c5652cba4b2", "requiredFiles": ["CMakeLists.txt", "LICENSE"] }
+    }
+  ]
+}
