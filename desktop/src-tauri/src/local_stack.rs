@@ -251,12 +251,17 @@ fn backend(component: &RuntimeComponent, config: &LocalStackConfig<'_>) -> Resul
         runtime_file(config, &component.executable),
         vec![
             "--enable-preview".to_owned(),
+            "--enable-native-access=ALL-UNNAMED".to_owned(),
             "-jar".to_owned(),
             display(&config.runtime_root.join("backend/penpot.jar")),
             "-m".to_owned(),
             "app.main".to_owned(),
         ],
         BTreeMap::from([
+            (
+                "JAVA_HOME".to_owned(),
+                display(&config.runtime_root.join("jre")),
+            ),
             (
                 "PENPOT_DATABASE_URI".to_owned(),
                 format!("postgresql://{LOOPBACK}:{}/penpot", config.ports.postgres),
@@ -566,6 +571,17 @@ mod tests {
         assert_eq!(
             backend.command.environment["PENPOT_REDIS_URI"],
             "redis://:cache%3A%2F%3F%23%20secret@127.0.0.1:41002/0"
+        );
+        assert!(
+            backend
+                .command
+                .arguments
+                .iter()
+                .any(|argument| argument == "--enable-native-access=ALL-UNNAMED")
+        );
+        assert_eq!(
+            backend.command.environment["JAVA_HOME"],
+            runtime_root.join("jre").to_string_lossy()
         );
     }
 

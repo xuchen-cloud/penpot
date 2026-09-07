@@ -22,7 +22,10 @@ try {
         type: "offlineInstaller",
         silent: true,
       },
-      nsis: { installMode: "currentUser" },
+      nsis: {
+        installMode: "currentUser",
+        installerHooks: join(desktopRoot, "src-tauri", "nsis", "installer-hooks.nsh"),
+      },
     };
   }
   run(process.execPath, [join(desktopRoot, "node_modules/@tauri-apps/cli/tauri.js"),
