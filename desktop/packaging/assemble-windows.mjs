@@ -3,6 +3,7 @@ import { access, cp, mkdir, readFile, readdir, rename, rm } from "node:fs/promis
 import { dirname, join, resolve } from "node:path";
 
 import { auditWindowsRuntime } from "./audit-windows-runtime.mjs";
+import { validateFrontendOutput } from "./frontend-artifacts.mjs";
 import { installSharedArtifacts, verifySharedArtifacts } from "./shared-artifacts.mjs";
 import { desktopRoot, run } from "./verify.mjs";
 import { invokeTool, resolveToolCommand } from "./tool-command.mjs";
@@ -117,6 +118,7 @@ async function main() {
       );
     }
     await installSharedArtifacts(sharedRoot, staging);
+    await validateFrontendOutput(join(staging, "frontend"));
     await prunePackagingOnlyFiles(staging);
     run(process.execPath, [join(desktopRoot, "compatibility", "prepare-runtime.mjs"), staging], desktopRoot);
 

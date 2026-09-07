@@ -4,6 +4,10 @@ import { join, resolve } from "node:path";
 import { desktopRoot, run } from "./verify.mjs";
 import { stageSharedArtifacts } from "./stage-shared-artifacts.mjs";
 import {
+  resetFrontendOutput,
+  validateFrontendOutput,
+} from "./frontend-artifacts.mjs";
+import {
   encodePowerShellFileArguments,
   invokeTool,
   resolveToolCommand,
@@ -141,6 +145,7 @@ try {
   }
   invokePnpm(["install", "--frozen-lockfile"], join(repo, "render-wasm"));
   invokePnpm(["run", "build:runtime"], join(repo, "plugins"));
+  await resetFrontendOutput(join(repo, "frontend/resources/public"));
   for (const target of ["frontend", "export"]) {
     const output =
       target === "frontend"
@@ -159,6 +164,7 @@ try {
   );
   invokePnpm(["run", "build:app:libs"], join(repo, "frontend"));
   invokePnpm(["run", "build:app:assets"], join(repo, "frontend"));
+  await validateFrontendOutput(join(repo, "frontend/resources/public"));
   invokeClojure(
     ["-M:dev:shadow-cljs", "release", "main"],
     join(repo, "exporter"),

@@ -117,13 +117,12 @@ impl LocalRuntime {
                     )));
                 }
             };
-            if let Some(path) = readiness_path {
+            if spec.id == "postgres" {
+                bootstrap.create_application_database(timeout).await?;
+            } else if let Some(path) = readiness_path {
                 wait_for_http(port, path, timeout, &spec.id).await?;
             } else {
                 wait_for_port(port, timeout, &spec.id).await?;
-            }
-            if spec.id == "postgres" {
-                bootstrap.create_application_database().await?;
             }
             if spec.id == "cache" {
                 drop(cache_config.take());

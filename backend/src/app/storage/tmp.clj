@@ -23,14 +23,23 @@
   (:import
    java.io.InputStream
    java.io.OutputStream
-   java.nio.file.Files))
+   java.nio.file.Files
+   java.nio.file.Path
+   java.nio.file.attribute.FileAttribute))
 
-(def default-tmp-dir "/tmp/penpot")
+(def default-tmp-dir (str (fs/join fs/*tmp-dir* "penpot")))
 
 (declare ^:private remove-temp-file)
 (declare ^:private io-loop)
 
 (defonce queue (sp/chan :buf 128))
+
+(defn- file-attributes
+  ^"[Ljava.nio.file.attribute.FileAttribute;"
+  [permissions]
+  (if (= fs/*system* :unix)
+    (fs/make-permissions permissions)
+    (make-array FileAttribute 0)))
 
 (defmethod ig/assert-key ::cleaner
   [_ {:keys [::wrk/executor]}]
@@ -42,7 +51,8 @@
 
 (defmethod ig/init-key ::cleaner
   [_ cfg]
-  (fs/create-dir default-tmp-dir)
+  (Files/createDirectories ^Path (fs/path default-tmp-dir)
+                           (file-attributes "rwxr-xr-x"))
   (px/fn->thread (partial io-loop cfg)
                  {:name "penpot/storage/tmp-cleaner"}))
 
@@ -84,7 +94,7 @@
       :or {prefix "penpot."
            suffix ".tmp"
            dir default-tmp-dir}}]
-  (let [attrs (fs/make-permissions "rw-r--r--")
+  (let [attrs (file-attributes "rw-r--r--")
         path  (fs/join dir (str prefix (uuid/next) suffix))]
     (Files/createFile path attrs)))
 
