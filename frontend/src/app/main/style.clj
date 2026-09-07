@@ -23,13 +23,13 @@
   ;; Calculates the css-modules prefix given the filename
   ;; should be the same as the calculation inside the `gulpfile.js`
   [fname]
-  (let [file (io/file fname)
-        parts
-        (->> (str/split (.getParent file) #"/")
-             (drop-while #(not= % ROOT-NAME))
-             (rest)
-             (str/join "_"))]
-    (str parts "_" (subs (.getName file) 0 (- (count (.getName file)) 5)) "__")))
+  (let [parts     (str/split fname #"[\\/]")
+        file-name (last parts)
+        parts     (->> (butlast parts)
+                       (drop-while #(not= % ROOT-NAME))
+                       (rest)
+                       (str/join "_"))]
+    (str parts "_" (subs file-name 0 (- (count file-name) 5)) "__")))
 
 (def ^:private xform-css
   (keep (fn [k]

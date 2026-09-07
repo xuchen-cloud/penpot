@@ -10,6 +10,8 @@ import postcss from "postcss";
 import modulesProcessor from "postcss-modules";
 import autoprefixerProcessor from "autoprefixer";
 
+import { generateScopedName } from "./_css-modules.js";
+
 const compiler = await sass.initAsyncCompiler();
 
 async function compileFile(path) {
@@ -40,21 +42,13 @@ async function compileFile(path) {
 }
 
 function configureModulesProcessor(options) {
-  const ROOT_NAME = "app";
-
   return modulesProcessor({
     getJSON: (cssFileName, json, outputFileName) => {
       // We do nothing because we don't want the generated JSON files
     },
     // Calculates the whole css-module selector name.
     // Should be the same as the one in the file `/src/app/main/style.clj`
-    generateScopedName: (selector, filename, css) => {
-      const dir = ph.dirname(filename);
-      const name = ph.basename(filename, ".css");
-      const parts = dir.split("/");
-      const rootIdx = parts.findIndex((s) => s === ROOT_NAME);
-      return parts.slice(rootIdx + 1).join("_") + "_" + name + "__" + selector;
-    },
+    generateScopedName,
   });
 }
 
