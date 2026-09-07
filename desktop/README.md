@@ -56,6 +56,15 @@ PowerShell executable plus the arguments that import or run the Clojure module,
 and set `PENPOT_BUILD_PNPM_COMMAND` to Node plus pnpm's JavaScript entry point.
 The older `PENPOT_BUILD_CLOJURE` and `PENPOT_BUILD_PNPM` executable-only values
 remain supported.
+
+The root workspace intentionally pins pnpm 11.20.0, while the source modules
+pin pnpm 12.0.0. Nested module builds read the module's `packageManager` value
+and select it through Corepack before pnpm starts. Do not replace that command
+with a hard-coded `pnpm.cmd`, because Corepack will select the root pnpm version
+before the child module can enforce its own version. Use
+`PENPOT_BUILD_PNPM_COMMAND` only when a reproducible build supplies an explicit
+Node and pnpm entry point.
+
 By default, Windows source builds use `invoke-clojure-windows.ps1`; it locates
 one cached JDK and ClojureTools module under `desktop/.cache/toolchains/` and
 normalizes the combined `-M:`, `-T:`, and `-X:` forms expected by the Unix CLI.
